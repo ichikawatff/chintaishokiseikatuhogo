@@ -567,7 +567,7 @@
             <label for="rent">
               月額家賃（円）<span class="required">*</span>
             </label>
-            <input type="number" id="rent" value="100000" min="0" max="10000000" required aria-describedby="error-rent">
+            <input type="number" id="rent" value="53700" min="0" max="10000000" required aria-describedby="error-rent">
             <span class="error-message" id="error-rent"></span>
           </div>
 
@@ -726,6 +726,7 @@
 
         // 初期化
         this.loadFromURL() || this.loadFromStorage();
+        this.applyDefaultDate();
         this.initTheme();
         this.initChart();
         this.calculate();
@@ -911,13 +912,14 @@
         });
 
         // デフォルト値設定
-        document.getElementById('rent').value = '100000';
+        document.getElementById('rent').value = '53700';
         document.getElementById('managementFee').value = '5000';
         document.getElementById('deposit').value = '1';
         document.getElementById('keyMoney').value = '1';
         document.getElementById('insurance').value = '20000';
         document.getElementById('guaranteeFee').value = '50';
         document.getElementById('agencyFee').value = '110';
+        this.applyDefaultDate();
 
         localStorage.removeItem(this.storageKey);
         this.calculate();
@@ -982,6 +984,17 @@
           document.getElementById('themeToggle').textContent = '☀️';
           localStorage.setItem('theme', 'dark');
         }
+      }
+
+      applyDefaultDate() {
+        const moveInDateField = document.getElementById('moveInDate');
+        if (!moveInDateField || moveInDateField.value) return;
+        const today = new Date();
+        const defaultDate = new Date(today.getFullYear(), today.getMonth(), 20);
+        const year = defaultDate.getFullYear();
+        const month = String(defaultDate.getMonth() + 1).padStart(2, '0');
+        const day = String(defaultDate.getDate()).padStart(2, '0');
+        moveInDateField.value = `${year}-${month}-${day}`;
       }
     }
 
