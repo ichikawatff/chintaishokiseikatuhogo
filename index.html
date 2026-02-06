@@ -1,0 +1,1000 @@
+<!DOCTYPE html>
+<html lang="ja">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="日本の賃貸物件を借りる際の初期費用を簡単に計算できる無料シミュレーター。敷金・礼金・仲介手数料など全ての費用を自動計算。">
+  <meta name="keywords" content="賃貸, 初期費用, シミュレーター, 計算, 敷金, 礼金, 仲介手数料">
+  <meta name="theme-color" content="#667eea">
+
+  <!-- OGP -->
+  <meta property="og:title" content="賃貸初期費用シミュレーター">
+  <meta property="og:description" content="賃貸物件の初期費用を簡単計算。敷金・礼金・仲介手数料などを自動計算。">
+  <meta property="og:type" content="website">
+
+  <!-- PWA -->
+  <link rel="manifest" href="manifest.json">
+  <link rel="apple-touch-icon" href="icon-192.png">
+
+  <title>賃貸初期費用シミュレーター</title>
+
+  <!-- Chart.js CDN -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+
+  <style>
+    /* CSS変数 */
+    :root {
+      --primary: #667eea;
+      --primary-dark: #5a67d8;
+      --secondary: #764ba2;
+      --success: #48bb78;
+      --success-dark: #38a169;
+      --warning: #f6ad55;
+      --danger: #fc8181;
+      --info: #63b3ed;
+
+      --bg-primary: #f7fafc;
+      --bg-secondary: #ffffff;
+      --bg-card: rgba(255, 255, 255, 0.9);
+
+      --text-primary: #2d3748;
+      --text-secondary: #4a5568;
+      --text-muted: #718096;
+
+      --border-color: #e2e8f0;
+      --shadow: 0 10px 40px rgba(102, 126, 234, 0.15);
+      --shadow-hover: 0 20px 60px rgba(102, 126, 234, 0.25);
+
+      --radius: 16px;
+      --radius-sm: 8px;
+      --spacing: clamp(1rem, 3vw, 2rem);
+
+      --font-size-base: clamp(14px, 2vw, 16px);
+      --font-size-lg: clamp(18px, 3vw, 24px);
+      --font-size-xl: clamp(24px, 4vw, 36px);
+    }
+
+    /* ダークモード */
+    @media (prefers-color-scheme: dark) {
+      :root {
+        --bg-primary: #1a202c;
+        --bg-secondary: #2d3748;
+        --bg-card: rgba(45, 55, 72, 0.95);
+        --text-primary: #f7fafc;
+        --text-secondary: #e2e8f0;
+        --text-muted: #a0aec0;
+        --border-color: #4a5568;
+        --shadow: 0 10px 40px rgba(0, 0, 0, 0.3);
+      }
+    }
+
+    /* リセット & ベース */
+    *,
+    *::before,
+    *::after {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      font-family: 'Segoe UI', -apple-system, BlinkMacSystemFont, 'Hiragino Sans', sans-serif;
+      font-size: var(--font-size-base);
+      line-height: 1.6;
+      background: linear-gradient(135deg, var(--bg-primary) 0%, #edf2f7 100%);
+      color: var(--text-primary);
+      min-height: 100vh;
+      padding: var(--spacing);
+    }
+
+    @media (prefers-color-scheme: dark) {
+      body {
+        background: linear-gradient(135deg, #1a202c 0%, #2d3748 100%);
+      }
+    }
+
+    /* ヘッダー */
+    header {
+      text-align: center;
+      margin-bottom: var(--spacing);
+    }
+
+    h1 {
+      font-size: var(--font-size-xl);
+      font-weight: 700;
+      background: linear-gradient(135deg, var(--primary), var(--secondary));
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+      animation: fadeInDown 0.6s ease-out;
+    }
+
+    .subtitle {
+      color: var(--text-muted);
+      margin-top: 0.5rem;
+      font-size: var(--font-size-base);
+    }
+
+    /* ダークモードトグル */
+    .theme-toggle {
+      position: fixed;
+      top: 1rem;
+      right: 1rem;
+      background: var(--bg-card);
+      border: 1px solid var(--border-color);
+      border-radius: 50%;
+      width: 48px;
+      height: 48px;
+      cursor: pointer;
+      font-size: 1.5rem;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: all 0.3s ease;
+      z-index: 100;
+      backdrop-filter: blur(10px);
+    }
+
+    .theme-toggle:hover {
+      transform: scale(1.1);
+      box-shadow: var(--shadow);
+    }
+
+    /* メインコンテナ */
+    main {
+      max-width: 1200px;
+      margin: 0 auto;
+    }
+
+    .container {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: var(--spacing);
+      animation: fadeInUp 0.6s ease-out 0.2s backwards;
+    }
+
+    @media (max-width: 900px) {
+      .container {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    /* カード */
+    .card {
+      background: var(--bg-card);
+      backdrop-filter: blur(20px);
+      border-radius: var(--radius);
+      padding: var(--spacing);
+      box-shadow: var(--shadow);
+      border: 1px solid var(--border-color);
+      transition: all 0.3s ease;
+    }
+
+    .card:hover {
+      box-shadow: var(--shadow-hover);
+    }
+
+    .card-title {
+      font-size: var(--font-size-lg);
+      font-weight: 600;
+      margin-bottom: 1.5rem;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+
+    /* フォーム */
+    form {
+      display: flex;
+      flex-direction: column;
+      gap: 1rem;
+    }
+
+    .form-group {
+      display: flex;
+      flex-direction: column;
+      gap: 0.5rem;
+      animation: fadeIn 0.3s ease-out;
+    }
+
+    label {
+      font-weight: 500;
+      color: var(--text-secondary);
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      font-size: 0.9rem;
+    }
+
+    .required {
+      color: var(--danger);
+      font-weight: bold;
+    }
+
+    .tooltip-icon {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 18px;
+      height: 18px;
+      background: var(--info);
+      color: white;
+      border-radius: 50%;
+      font-size: 0.7rem;
+      cursor: help;
+      position: relative;
+    }
+
+    .tooltip-icon:hover::after {
+      content: attr(data-tooltip);
+      position: absolute;
+      bottom: 130%;
+      left: 50%;
+      transform: translateX(-50%);
+      background: var(--text-primary);
+      color: var(--bg-secondary);
+      padding: 0.5rem 1rem;
+      border-radius: var(--radius-sm);
+      font-size: 0.75rem;
+      white-space: nowrap;
+      z-index: 100;
+      animation: fadeIn 0.2s ease;
+    }
+
+    input,
+    select {
+      width: 100%;
+      padding: 0.75rem 1rem;
+      border: 2px solid var(--border-color);
+      border-radius: var(--radius-sm);
+      font-size: var(--font-size-base);
+      background: var(--bg-secondary);
+      color: var(--text-primary);
+      transition: all 0.3s ease;
+    }
+
+    input:focus,
+    select:focus {
+      outline: none;
+      border-color: var(--primary);
+      box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.2);
+    }
+
+    input.error {
+      border-color: var(--danger);
+      animation: shake 0.4s ease;
+    }
+
+    .error-message {
+      color: var(--danger);
+      font-size: 0.8rem;
+      display: none;
+    }
+
+    /* ボタン */
+    .button-group {
+      display: grid;
+      grid-template-columns: 2fr 1fr;
+      gap: 0.75rem;
+      margin-top: 1rem;
+    }
+
+    .button-group-secondary {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 0.75rem;
+    }
+
+    button {
+      padding: 0.875rem 1.5rem;
+      border: none;
+      border-radius: var(--radius-sm);
+      font-size: var(--font-size-base);
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 0.5rem;
+    }
+
+    .btn-primary {
+      background: linear-gradient(135deg, var(--primary), var(--secondary));
+      color: white;
+    }
+
+    .btn-primary:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 10px 30px rgba(102, 126, 234, 0.4);
+    }
+
+    .btn-secondary {
+      background: var(--bg-secondary);
+      color: var(--text-secondary);
+      border: 2px solid var(--border-color);
+    }
+
+    .btn-secondary:hover {
+      background: var(--border-color);
+    }
+
+    .btn-info {
+      background: var(--info);
+      color: white;
+    }
+
+    .btn-warning {
+      background: var(--warning);
+      color: var(--text-primary);
+    }
+
+    /* 結果セクション */
+    .result-total {
+      background: linear-gradient(135deg, var(--primary), var(--secondary));
+      color: white;
+      padding: 1.5rem;
+      border-radius: var(--radius);
+      text-align: center;
+      font-size: var(--font-size-lg);
+      font-weight: 700;
+      margin-bottom: 1.5rem;
+      animation: pulse 2s ease infinite;
+    }
+
+    .result-total .amount {
+      font-size: var(--font-size-xl);
+      display: block;
+      margin-top: 0.5rem;
+    }
+
+    /* 内訳リスト */
+    .summary-list {
+      display: flex;
+      flex-direction: column;
+      gap: 0.75rem;
+    }
+
+    .summary-item {
+      display: grid;
+      grid-template-columns: 1fr auto;
+      gap: 1rem;
+      padding: 0.75rem;
+      background: var(--bg-secondary);
+      border-radius: var(--radius-sm);
+      align-items: center;
+      transition: all 0.3s ease;
+    }
+
+    .summary-item:hover {
+      background: var(--border-color);
+      transform: translateX(4px);
+    }
+
+    .summary-item .label {
+      font-weight: 500;
+      color: var(--text-secondary);
+    }
+
+    .summary-item .note {
+      font-size: 0.8rem;
+      color: var(--text-muted);
+    }
+
+    .summary-item .value {
+      font-weight: 700;
+      color: var(--primary);
+      text-align: right;
+    }
+
+    /* グラフ */
+    .chart-container {
+      margin-top: 1.5rem;
+      padding: 1rem;
+      background: var(--bg-secondary);
+      border-radius: var(--radius-sm);
+    }
+
+    .chart-container canvas {
+      max-height: 300px;
+    }
+
+    /* 注意事項 */
+    .note-box {
+      background: linear-gradient(135deg, rgba(99, 179, 237, 0.1), rgba(102, 126, 234, 0.1));
+      border-left: 4px solid var(--info);
+      padding: 1rem;
+      border-radius: var(--radius-sm);
+      margin-top: 1.5rem;
+      font-size: 0.85rem;
+    }
+
+    .note-box strong {
+      color: var(--info);
+    }
+
+    /* 成功メッセージ */
+    .success-toast {
+      position: fixed;
+      bottom: 2rem;
+      left: 50%;
+      transform: translateX(-50%) translateY(100px);
+      background: var(--success);
+      color: white;
+      padding: 1rem 2rem;
+      border-radius: var(--radius);
+      font-weight: 600;
+      opacity: 0;
+      transition: all 0.3s ease;
+      z-index: 1000;
+    }
+
+    .success-toast.show {
+      transform: translateX(-50%) translateY(0);
+      opacity: 1;
+    }
+
+    /* アニメーション */
+    @keyframes fadeIn {
+      from {
+        opacity: 0;
+      }
+
+      to {
+        opacity: 1;
+      }
+    }
+
+    @keyframes fadeInUp {
+      from {
+        opacity: 0;
+        transform: translateY(20px);
+      }
+
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    @keyframes fadeInDown {
+      from {
+        opacity: 0;
+        transform: translateY(-20px);
+      }
+
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    @keyframes shake {
+
+      0%,
+      100% {
+        transform: translateX(0);
+      }
+
+      25% {
+        transform: translateX(-5px);
+      }
+
+      75% {
+        transform: translateX(5px);
+      }
+    }
+
+    @keyframes pulse {
+
+      0%,
+      100% {
+        transform: scale(1);
+      }
+
+      50% {
+        transform: scale(1.02);
+      }
+    }
+
+    /* 印刷用 */
+    @media print {
+
+      .card:first-child,
+      .button-group,
+      .button-group-secondary,
+      .theme-toggle {
+        display: none;
+      }
+
+      body {
+        background: white;
+        padding: 0;
+      }
+
+      .card {
+        box-shadow: none;
+        border: 1px solid #ddd;
+      }
+    }
+
+    /* モバイル対応 */
+    @media (max-width: 600px) {
+
+      .button-group,
+      .button-group-secondary {
+        grid-template-columns: 1fr;
+      }
+
+      .summary-item {
+        grid-template-columns: 1fr;
+        gap: 0.25rem;
+      }
+
+      .summary-item .value {
+        text-align: left;
+      }
+    }
+  </style>
+</head>
+
+<body>
+  <!-- ダークモードトグル -->
+  <button class="theme-toggle" id="themeToggle" aria-label="ダークモード切り替え">🌙</button>
+
+  <header>
+    <h1>🏠 賃貸初期費用シミュレーター</h1>
+    <p class="subtitle">引越し前に初期費用を簡単チェック</p>
+  </header>
+
+  <main>
+    <div class="container">
+      <!-- 入力フォーム -->
+      <section class="card" aria-labelledby="form-title">
+        <h2 class="card-title" id="form-title">📝 条件を入力</h2>
+
+        <form id="calculatorForm" novalidate>
+          <div class="form-group">
+            <label for="moveInDate">
+              入居年月日 <span class="required">*</span>
+            </label>
+            <input type="date" id="moveInDate" required aria-describedby="error-moveInDate">
+            <span class="error-message" id="error-moveInDate"></span>
+          </div>
+
+          <div class="form-group">
+            <label for="rent">
+              月額家賃（円）<span class="required">*</span>
+            </label>
+            <input type="number" id="rent" value="100000" min="0" max="10000000" required aria-describedby="error-rent">
+            <span class="error-message" id="error-rent"></span>
+          </div>
+
+          <div class="form-group">
+            <label for="managementFee">
+              月額管理費（円）
+            </label>
+            <input type="number" id="managementFee" value="5000" min="0" max="100000">
+          </div>
+
+          <div class="form-group">
+            <label for="deposit">
+              敷金（ヶ月）
+              <span class="tooltip-icon" data-tooltip="通常0〜2ヶ月分">?</span>
+            </label>
+            <input type="number" id="deposit" value="1" min="0" max="12" step="0.1">
+          </div>
+
+          <div class="form-group">
+            <label for="keyMoney">
+              礼金（ヶ月）
+              <span class="tooltip-icon" data-tooltip="通常0〜2ヶ月分">?</span>
+            </label>
+            <input type="number" id="keyMoney" value="1" min="0" max="12" step="0.1">
+          </div>
+
+          <div class="form-group">
+            <label for="insurance">火災保険（円）</label>
+            <input type="number" id="insurance" value="20000" min="0" max="100000">
+          </div>
+
+          <div class="form-group">
+            <label for="keyChangeFee">鍵交換代（円）</label>
+            <input type="number" id="keyChangeFee" placeholder="例: 15000" min="0" max="100000">
+          </div>
+
+          <div class="form-group">
+            <label for="guaranteeFee">
+              保証会社保証料（%）
+              <span class="tooltip-icon" data-tooltip="月額賃料+管理費の合計に対する割合">?</span>
+            </label>
+            <input type="number" id="guaranteeFee" value="50" min="0" max="200" step="0.1">
+          </div>
+
+          <div class="form-group">
+            <label for="agencyFee">
+              仲介手数料（%）
+              <span class="tooltip-icon" data-tooltip="賃料に対する割合（上限1.1ヶ月=110%）">?</span>
+            </label>
+            <input type="number" id="agencyFee" value="110" min="0" max="110" step="0.1">
+          </div>
+
+          <div class="form-group">
+            <label for="otherCost1">その他費用1（円）</label>
+            <input type="number" id="otherCost1" placeholder="例: 清掃費 10000" min="0" max="1000000">
+          </div>
+
+          <div class="form-group">
+            <label for="otherCost2">その他費用2（円）</label>
+            <input type="number" id="otherCost2" placeholder="例: 害虫駆除 5000" min="0" max="1000000">
+          </div>
+
+          <div class="button-group">
+            <button type="submit" class="btn-primary">💰 計算する</button>
+            <button type="button" class="btn-secondary" id="resetBtn">🔄 リセット</button>
+          </div>
+
+          <div class="button-group-secondary">
+            <button type="button" class="btn-info" id="printBtn">🖨️ 印刷</button>
+            <button type="button" class="btn-warning" id="shareBtn">🔗 URL共有</button>
+          </div>
+        </form>
+
+        <div class="note-box">
+          <strong>📌 注意事項</strong><br>
+          ・日割り計算は入居日から月末までの日数で計算されます<br>
+          ・保証料は賃料と管理費の合計額に対して計算されます<br>
+          ・仲介手数料は法的上限の110%（税込）までです<br>
+          ・実際の費用は物件や不動産会社により異なる場合があります
+        </div>
+      </section>
+
+      <!-- 結果表示 -->
+      <section class="card" aria-labelledby="result-title">
+        <h2 class="card-title" id="result-title">📊 計算結果</h2>
+
+        <div class="result-total" aria-live="polite">
+          初期費用合計
+          <span class="amount" id="totalAmount">0 円</span>
+        </div>
+
+        <div class="summary-list" id="summaryList">
+          <!-- 動的に生成 -->
+        </div>
+
+        <div class="chart-container">
+          <canvas id="costChart" aria-label="費用内訳グラフ"></canvas>
+        </div>
+      </section>
+    </div>
+  </main>
+
+  <!-- 成功トースト -->
+  <div class="success-toast" id="successToast"></div>
+
+  <!-- 構造化データ -->
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "WebApplication",
+    "name": "賃貸初期費用シミュレーター",
+    "description": "日本の賃貸物件を借りる際の初期費用を計算するツール",
+    "applicationCategory": "FinanceApplication",
+    "operatingSystem": "All"
+  }
+  </script>
+
+  <script>
+    // 計算機クラス
+    class CostCalculator {
+      constructor() {
+        this.form = document.getElementById('calculatorForm');
+        this.chart = null;
+        this.storageKey = 'rentCalculatorData';
+        this.fields = [
+          'moveInDate', 'rent', 'deposit', 'keyMoney',
+          'managementFee', 'insurance', 'keyChangeFee',
+          'guaranteeFee', 'agencyFee', 'otherCost1', 'otherCost2'
+        ];
+
+        this.init();
+      }
+
+      init() {
+        // イベントリスナー設定
+        this.form.addEventListener('submit', (e) => {
+          e.preventDefault();
+          this.calculate();
+        });
+
+        document.getElementById('resetBtn').addEventListener('click', () => this.reset());
+        document.getElementById('printBtn').addEventListener('click', () => window.print());
+        document.getElementById('shareBtn').addEventListener('click', () => this.share());
+        document.getElementById('themeToggle').addEventListener('click', () => this.toggleTheme());
+
+        // リアルタイム計算
+        this.fields.forEach(id => {
+          const el = document.getElementById(id);
+          if (el) {
+            el.addEventListener('input', () => {
+              this.saveToStorage();
+              this.calculate();
+            });
+          }
+        });
+
+        // 初期化
+        this.loadFromURL() || this.loadFromStorage();
+        this.initTheme();
+        this.initChart();
+        this.calculate();
+      }
+
+      getValue(id) {
+        return parseFloat(document.getElementById(id)?.value) || 0;
+      }
+
+      getDateValue(id) {
+        return document.getElementById(id)?.value || '';
+      }
+
+      calculateDaysInMonth(year, month) {
+        return new Date(year, month, 0).getDate();
+      }
+
+      calculateDailyFees(rent, managementFee, moveInDate) {
+        const moveIn = new Date(moveInDate);
+        const year = moveIn.getFullYear();
+        const month = moveIn.getMonth() + 1;
+        const daysInMonth = this.calculateDaysInMonth(year, month);
+        const daysRemaining = daysInMonth - moveIn.getDate() + 1;
+        const dailyRent = Math.round((rent / daysInMonth) * daysRemaining);
+        const dailyManagementFee = Math.round((managementFee / daysInMonth) * daysRemaining);
+        return { dailyRent, dailyManagementFee, daysRemaining, daysInMonth, currentMonth: month };
+      }
+
+      calculate() {
+        const moveInDate = this.getDateValue('moveInDate');
+        const rent = this.getValue('rent');
+        const managementFee = this.getValue('managementFee');
+        const deposit = this.getValue('deposit');
+        const keyMoney = this.getValue('keyMoney');
+        const insurance = this.getValue('insurance');
+        const keyChangeFee = this.getValue('keyChangeFee');
+        const guaranteeFee = this.getValue('guaranteeFee');
+        const agencyFee = this.getValue('agencyFee');
+        const otherCost1 = this.getValue('otherCost1');
+        const otherCost2 = this.getValue('otherCost2');
+
+        // 計算
+        const depositCost = Math.round(rent * deposit);
+        const keyMoneyCost = Math.round(rent * keyMoney);
+        const guaranteeFeeCost = Math.round((rent + managementFee) * (guaranteeFee / 100));
+        const agencyFeeCost = Math.round(rent * (agencyFee / 100));
+        const advanceRent = rent;
+        const advanceManagementFee = managementFee;
+
+        let dailyRent = 0, dailyManagementFee = 0, daysInMonth = 0, daysRemaining = 0, currentMonth = 0;
+        if (moveInDate) {
+          const dailyFees = this.calculateDailyFees(rent, managementFee, moveInDate);
+          dailyRent = dailyFees.dailyRent;
+          dailyManagementFee = dailyFees.dailyManagementFee;
+          daysInMonth = dailyFees.daysInMonth;
+          daysRemaining = dailyFees.daysRemaining;
+          currentMonth = dailyFees.currentMonth;
+        }
+
+        const nextMonth = currentMonth === 12 ? 1 : currentMonth + 1;
+
+        const totalCost = depositCost + keyMoneyCost + insurance + keyChangeFee +
+          guaranteeFeeCost + agencyFeeCost + advanceRent + advanceManagementFee +
+          otherCost1 + otherCost2 + dailyRent + dailyManagementFee;
+
+        // 表示更新
+        document.getElementById('totalAmount').textContent = `${totalCost.toLocaleString()} 円`;
+
+        // 内訳データ
+        const items = [
+          { label: '敷金', value: depositCost, note: deposit > 0 ? `賃料の${deposit}ヶ月分` : '' },
+          { label: '礼金', value: keyMoneyCost, note: keyMoney > 0 ? `賃料の${keyMoney}ヶ月分` : '' },
+          { label: '前家賃', value: advanceRent, note: moveInDate ? `${nextMonth}月分` : '' },
+          { label: '前管理費', value: advanceManagementFee, note: managementFee > 0 ? `${nextMonth}月分` : '' },
+          { label: '日割り家賃', value: dailyRent, note: moveInDate ? `${currentMonth}月分 ${daysRemaining}日/${daysInMonth}日` : '' },
+          { label: '日割り管理費', value: dailyManagementFee, note: moveInDate && managementFee > 0 ? `${currentMonth}月分 ${daysRemaining}日/${daysInMonth}日` : '' },
+          { label: '火災保険', value: insurance, note: insurance > 0 ? '2年間の保険料' : '' },
+          { label: '鍵交換代', value: keyChangeFee, note: '' },
+          { label: '保証会社保証料', value: guaranteeFeeCost, note: guaranteeFee > 0 ? `賃料総額の${guaranteeFee}%` : '' },
+          { label: '仲介手数料', value: agencyFeeCost, note: agencyFee > 0 ? `賃料の${agencyFee}%` : '' },
+          { label: 'その他費用1', value: otherCost1, note: '' },
+          { label: 'その他費用2', value: otherCost2, note: '' }
+        ].filter(item => item.value > 0);
+
+        // 内訳リスト更新
+        const summaryList = document.getElementById('summaryList');
+        summaryList.innerHTML = items.map(item => `
+          <div class="summary-item">
+            <div>
+              <div class="label">${item.label}</div>
+              ${item.note ? `<div class="note">${item.note}</div>` : ''}
+            </div>
+            <div class="value">${item.value.toLocaleString()} 円</div>
+          </div>
+        `).join('');
+
+        // グラフ更新
+        this.updateChart(items);
+      }
+
+      initChart() {
+        const ctx = document.getElementById('costChart').getContext('2d');
+        this.chart = new Chart(ctx, {
+          type: 'doughnut',
+          data: {
+            labels: [],
+            datasets: [{
+              data: [],
+              backgroundColor: [
+                '#667eea', '#764ba2', '#48bb78', '#f6ad55',
+                '#fc8181', '#63b3ed', '#b794f4', '#f687b3',
+                '#68d391', '#fbd38d', '#feb2b2', '#90cdf4'
+              ],
+              borderWidth: 0
+            }]
+          },
+          options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+              legend: {
+                position: 'bottom',
+                labels: {
+                  padding: 15,
+                  usePointStyle: true,
+                  font: { size: 11 }
+                }
+              }
+            }
+          }
+        });
+      }
+
+      updateChart(items) {
+        if (!this.chart) return;
+        this.chart.data.labels = items.map(i => i.label);
+        this.chart.data.datasets[0].data = items.map(i => i.value);
+        this.chart.update();
+      }
+
+      saveToStorage() {
+        const data = {};
+        this.fields.forEach(id => {
+          data[id] = document.getElementById(id)?.value || '';
+        });
+        localStorage.setItem(this.storageKey, JSON.stringify(data));
+      }
+
+      loadFromStorage() {
+        const saved = localStorage.getItem(this.storageKey);
+        if (saved) {
+          const data = JSON.parse(saved);
+          this.fields.forEach(id => {
+            if (data[id] !== undefined) {
+              const el = document.getElementById(id);
+              if (el) el.value = data[id];
+            }
+          });
+          return true;
+        }
+        return false;
+      }
+
+      loadFromURL() {
+        const params = new URLSearchParams(window.location.search);
+        let hasParams = false;
+        this.fields.forEach(id => {
+          const value = params.get(id);
+          if (value !== null) {
+            document.getElementById(id).value = value;
+            hasParams = true;
+          }
+        });
+        return hasParams;
+      }
+
+      reset() {
+        if (!confirm('入力内容をリセットしますか？')) return;
+
+        this.fields.forEach(id => {
+          const el = document.getElementById(id);
+          if (el) el.value = '';
+        });
+
+        // デフォルト値設定
+        document.getElementById('rent').value = '100000';
+        document.getElementById('managementFee').value = '5000';
+        document.getElementById('deposit').value = '1';
+        document.getElementById('keyMoney').value = '1';
+        document.getElementById('insurance').value = '20000';
+        document.getElementById('guaranteeFee').value = '50';
+        document.getElementById('agencyFee').value = '110';
+
+        localStorage.removeItem(this.storageKey);
+        this.calculate();
+      }
+
+      async share() {
+        const params = new URLSearchParams();
+        this.fields.forEach(id => {
+          const value = document.getElementById(id)?.value;
+          if (value) params.set(id, value);
+        });
+
+        const url = window.location.origin + window.location.pathname + '?' + params.toString();
+
+        // Web Share API対応チェック
+        if (navigator.share) {
+          try {
+            await navigator.share({
+              title: '賃貸初期費用シミュレーター',
+              text: '初期費用の計算結果をシェア',
+              url: url
+            });
+            return;
+          } catch (e) {
+            // ユーザーキャンセルの場合は何もしない
+            if (e.name === 'AbortError') return;
+          }
+        }
+
+        // クリップボードにコピー
+        try {
+          await navigator.clipboard.writeText(url);
+          this.showToast('URLをコピーしました！');
+        } catch {
+          prompt('以下のURLをコピーしてください:', url);
+        }
+      }
+
+      showToast(message) {
+        const toast = document.getElementById('successToast');
+        toast.textContent = message;
+        toast.classList.add('show');
+        setTimeout(() => toast.classList.remove('show'), 3000);
+      }
+
+      initTheme() {
+        const saved = localStorage.getItem('theme');
+        if (saved === 'dark') {
+          document.documentElement.setAttribute('data-theme', 'dark');
+          document.getElementById('themeToggle').textContent = '☀️';
+        }
+      }
+
+      toggleTheme() {
+        const isDark = document.documentElement.getAttribute('data-theme') === 'dark';
+        if (isDark) {
+          document.documentElement.removeAttribute('data-theme');
+          document.getElementById('themeToggle').textContent = '🌙';
+          localStorage.setItem('theme', 'light');
+        } else {
+          document.documentElement.setAttribute('data-theme', 'dark');
+          document.getElementById('themeToggle').textContent = '☀️';
+          localStorage.setItem('theme', 'dark');
+        }
+      }
+    }
+
+    // 初期化
+    document.addEventListener('DOMContentLoaded', () => {
+      new CostCalculator();
+    });
+
+    // Service Worker登録
+    if ('serviceWorker' in navigator) {
+      navigator.serviceWorker.register('sw.js').catch(() => { });
+    }
+  </script>
+</body>
+
+</html>

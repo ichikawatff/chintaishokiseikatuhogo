@@ -1,0 +1,17 @@
+{
+  "name": "賃貸初期費用シミュレーター",
+  "short_name": "初期費用計算",
+  "description": "日本の賃貸物件を借りる際の初期費用を計算するツール",
+  "start_url": "./index.html",
+  "display": "standalone",
+  "background_color": "#f7fafc",
+  "theme_color": "#667eea",
+  "lang": "ja",
+  "icons": [
+    {
+      "src": "data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🏠</text></svg>",
+      "sizes": "any",
+      "type": "image/svg+xml"
+    }
+  ]
+}
