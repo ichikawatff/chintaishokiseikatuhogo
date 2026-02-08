@@ -370,7 +370,7 @@
     .summary-list {
       display: flex;
       flex-direction: column;
-      gap: 0.75rem;
+      gap: 0;
     }
 
     .summary-item {
@@ -379,9 +379,21 @@
       gap: 1rem;
       padding: 0.75rem;
       background: var(--bg-secondary);
-      border-radius: var(--radius-sm);
+      border-radius: 0;
       align-items: center;
       transition: all 0.3s ease;
+      border-bottom: 1px solid var(--border-color);
+    }
+
+    .summary-item:first-child {
+      border-top-left-radius: var(--radius-sm);
+      border-top-right-radius: var(--radius-sm);
+    }
+
+    .summary-item:last-child {
+      border-bottom-left-radius: var(--radius-sm);
+      border-bottom-right-radius: var(--radius-sm);
+      border-bottom: none;
     }
 
     .summary-item:hover {
@@ -405,12 +417,42 @@
       text-align: right;
     }
 
-    /* 小計 */
     .subtotal-list {
       display: flex;
       flex-direction: column;
-      gap: 0.75rem;
+      gap: 0;
       margin-bottom: 1.5rem;
+    }
+
+    .subtotal-list .summary-item {
+      border-bottom: 1px solid var(--border-color);
+      border-radius: 0;
+    }
+
+    .subtotal-list .summary-item:first-child {
+      border-top-left-radius: var(--radius-sm);
+      border-top-right-radius: var(--radius-sm);
+    }
+
+    .subtotal-list .summary-item:last-child {
+      border-bottom-left-radius: var(--radius-sm);
+      border-bottom-right-radius: var(--radius-sm);
+    }
+
+    /* 小計のハイライト */
+    .subtotal-highlight {
+      background: linear-gradient(135deg, rgba(102, 126, 234, 0.15), rgba(118, 75, 162, 0.15)) !important;
+      border: 2px solid var(--primary) !important;
+    }
+
+    @media (prefers-color-scheme: dark) {
+      .subtotal-highlight {
+        background: linear-gradient(135deg, rgba(102, 126, 234, 0.25), rgba(118, 75, 162, 0.25)) !important;
+      }
+    }
+
+    :root[data-theme="dark"] .subtotal-highlight {
+      background: linear-gradient(135deg, rgba(102, 126, 234, 0.25), rgba(118, 75, 162, 0.25)) !important;
     }
 
     /* 注意事項 */
@@ -578,7 +620,7 @@
 
           <div class="form-group">
             <label for="rent">
-              月額家賃（円）<span class="required">*</span>
+              月額家賃(円)<span class="required">*</span>
             </label>
             <input type="number" id="rent" value="53700" min="0" max="10000000" required aria-describedby="error-rent">
             <span class="error-message" id="error-rent"></span>
@@ -586,14 +628,14 @@
 
           <div class="form-group">
             <label for="managementFee">
-              月額管理費（円）
+              月額管理費(円)
             </label>
             <input type="number" id="managementFee" value="0" min="0" max="100000">
           </div>
 
           <div class="form-group">
             <label for="deposit">
-              敷金（ヶ月）
+              敷金(ヶ月)
               <span class="tooltip-icon" data-tooltip="通常0〜2ヶ月分">?</span>
             </label>
             <input type="number" id="deposit" value="1" min="0" max="12" step="0.1">
@@ -601,45 +643,45 @@
 
           <div class="form-group">
             <label for="keyMoney">
-              礼金（ヶ月）
+              礼金(ヶ月)
               <span class="tooltip-icon" data-tooltip="通常0〜2ヶ月分">?</span>
             </label>
-            <input type="number" id="keyMoney" value="2" min="0" max="12" step="0.1">
+            <input type="number" id="keyMoney" value="1" min="0" max="12" step="0.1">
           </div>
 
           <div class="form-group">
-            <label for="insurance">火災保険（円）</label>
+            <label for="insurance">火災保険(円)</label>
             <input type="number" id="insurance" value="20000" min="0" max="100000">
           </div>
 
           <div class="form-group">
-            <label for="keyChangeFee">鍵交換代（円）</label>
-            <input type="number" id="keyChangeFee" placeholder="例: 15000" min="0" max="100000">
+            <label for="keyChangeFee">鍵交換代(円)</label>
+            <input type="number" id="keyChangeFee" value="15000" min="0" max="100000">
           </div>
 
           <div class="form-group">
             <label for="guaranteeFee">
-              保証会社保証料（%）
+              保証会社保証料(%)
               <span class="tooltip-icon" data-tooltip="月額賃料+管理費の合計に対する割合">?</span>
             </label>
-            <input type="number" id="guaranteeFee" value="100" min="0" max="200" step="0.1">
+            <input type="number" id="guaranteeFee" value="50" min="0" max="200" step="0.1">
           </div>
 
           <div class="form-group">
             <label for="agencyFee">
-              仲介手数料（%）
-              <span class="tooltip-icon" data-tooltip="賃料に対する割合（上限1.1ヶ月=110%）">?</span>
+              仲介手数料(%)
+              <span class="tooltip-icon" data-tooltip="賃料に対する割合(上限1.1ヶ月=110%)">?</span>
             </label>
             <input type="number" id="agencyFee" value="110" min="0" max="110" step="0.1">
           </div>
 
           <div class="form-group">
-            <label for="otherCost1">その他費用1（円）</label>
+            <label for="otherCost1">その他費用1(円)</label>
             <input type="number" id="otherCost1" placeholder="例: 清掃費 10000" min="0" max="1000000">
           </div>
 
           <div class="form-group">
-            <label for="otherCost2">その他費用2（円）</label>
+            <label for="otherCost2">その他費用2(円)</label>
             <input type="number" id="otherCost2" placeholder="例: 害虫駆除 5000" min="0" max="1000000">
           </div>
 
@@ -658,7 +700,7 @@
           <strong>📌 注意事項</strong><br>
           ・日割り計算は入居日から月末までの日数で計算されます<br>
           ・保証料は賃料と管理費の合計額に対して計算されます<br>
-          ・仲介手数料は法的上限の110%（税込）までです<br>
+          ・仲介手数料は法的上限の110%(税込)までです<br>
           ・実際の費用は物件や不動産会社により異なる場合があります
         </div>
       </section>
@@ -675,16 +717,38 @@
         <div class="subtotal-list" aria-live="polite">
           <div class="summary-item">
             <div>
-              <div class="label">前払い家賃合計</div>
-              <div class="note">前家賃・前管理費・日割り家賃・日割り管理費</div>
+              <div class="label">前家賃</div>
+              <div class="note" id="advanceRentNote"></div>
             </div>
-            <div class="value" id="prepayTotal">0 円</div>
+            <div class="value" id="advanceRentValue">0 円</div>
           </div>
           <div class="summary-item">
             <div>
-              <div class="label">家賃以外合計</div>
+              <div class="label">前管理費</div>
+              <div class="note" id="advanceManagementNote"></div>
             </div>
-            <div class="value" id="nonRentTotal">0 円</div>
+            <div class="value" id="advanceManagementValue">0 円</div>
+          </div>
+          <div class="summary-item">
+            <div>
+              <div class="label">日割り家賃</div>
+              <div class="note" id="dailyRentNote"></div>
+            </div>
+            <div class="value" id="dailyRentValue">0 円</div>
+          </div>
+          <div class="summary-item">
+            <div>
+              <div class="label">日割り管理費</div>
+              <div class="note" id="dailyManagementNote"></div>
+            </div>
+            <div class="value" id="dailyManagementValue">0 円</div>
+          </div>
+          <div class="summary-item subtotal-highlight" style="border-top: 2px solid var(--border-color); padding-top: 1rem; margin-top: 0.5rem;">
+            <div>
+              <div class="label" style="font-weight: 700;">前払い家賃小計</div>
+              <div class="note">上記4項目の合計</div>
+            </div>
+            <div class="value" id="prepayTotal" style="font-size: 1.1em;">0 円</div>
           </div>
         </div>
 
@@ -711,6 +775,20 @@
   </script>
 
   <script>
+    // 定数定義
+    const DEFAULTS = {
+      rent: 53700,
+      managementFee: 0,
+      deposit: 1,
+      keyMoney: 1,
+      insurance: 20000,
+      keyChangeFee: 15000,
+      guaranteeFee: 50,
+      agencyFee: 110,
+      otherCost1: 0,
+      otherCost2: 0
+    };
+
     // 計算機クラス
     class CostCalculator {
       constructor() {
@@ -820,6 +898,15 @@
           ok = false;
         }
 
+        // エラーがあれば最初のエラーにフォーカス
+        if (!ok) {
+          if (document.getElementById('moveInDate').classList.contains('error')) {
+            document.getElementById('moveInDate').focus();
+          } else if (document.getElementById('rent').classList.contains('error')) {
+            document.getElementById('rent').focus();
+          }
+        }
+
         return ok;
       }
 
@@ -857,8 +944,15 @@
         // バリデーション
         if (!this.validate()) {
           document.getElementById('totalAmount').textContent = `0 円`;
+          document.getElementById('advanceRentValue').textContent = `0 円`;
+          document.getElementById('advanceRentNote').textContent = '';
+          document.getElementById('advanceManagementValue').textContent = `0 円`;
+          document.getElementById('advanceManagementNote').textContent = '';
+          document.getElementById('dailyRentValue').textContent = `0 円`;
+          document.getElementById('dailyRentNote').textContent = '';
+          document.getElementById('dailyManagementValue').textContent = `0 円`;
+          document.getElementById('dailyManagementNote').textContent = '';
           document.getElementById('prepayTotal').textContent = `0 円`;
-          document.getElementById('nonRentTotal').textContent = `0 円`;
           const summaryList = document.getElementById('summaryList');
           summaryList.innerHTML = '';
           return;
@@ -893,17 +987,26 @@
 
         // 表示更新
         document.getElementById('totalAmount').textContent = `${totalCost.toLocaleString()} 円`;
+        
+        // 前払い家賃の内訳を個別表示
+        document.getElementById('advanceRentValue').textContent = `${advanceRent.toLocaleString()} 円`;
+        document.getElementById('advanceRentNote').textContent = moveInDate ? `${nextMonth}月分` : '';
+        
+        document.getElementById('advanceManagementValue').textContent = `${advanceManagementFee.toLocaleString()} 円`;
+        document.getElementById('advanceManagementNote').textContent = managementFee > 0 && moveInDate ? `${nextMonth}月分` : '';
+        
+        document.getElementById('dailyRentValue').textContent = `${dailyRent.toLocaleString()} 円`;
+        document.getElementById('dailyRentNote').textContent = moveInDate ? `${currentMonth}月分 ${daysRemaining}日/${daysInMonth}日` : '';
+        
+        document.getElementById('dailyManagementValue').textContent = `${dailyManagementFee.toLocaleString()} 円`;
+        document.getElementById('dailyManagementNote').textContent = moveInDate && managementFee > 0 ? `${currentMonth}月分 ${daysRemaining}日/${daysInMonth}日` : '';
+        
         document.getElementById('prepayTotal').textContent = `${prepayTotal.toLocaleString()} 円`;
-        document.getElementById('nonRentTotal').textContent = `${nonRentTotal.toLocaleString()} 円`;
 
-        // 内訳データ
+        // 内訳データ(前払い家賃関連は上部で表示済みのため除外)
         const items = [
           { label: '敷金', value: depositCost, note: deposit > 0 ? `賃料の${deposit}ヶ月分` : '' },
           { label: '礼金', value: keyMoneyCost, note: keyMoney > 0 ? `賃料の${keyMoney}ヶ月分` : '' },
-          { label: '前家賃', value: advanceRent, note: moveInDate ? `${nextMonth}月分` : '' },
-          { label: '前管理費', value: advanceManagementFee, note: managementFee > 0 ? `${nextMonth}月分` : '' },
-          { label: '日割り家賃', value: dailyRent, note: moveInDate ? `${currentMonth}月分 ${daysRemaining}日/${daysInMonth}日` : '' },
-          { label: '日割り管理費', value: dailyManagementFee, note: moveInDate && managementFee > 0 ? `${currentMonth}月分 ${daysRemaining}日/${daysInMonth}日` : '' },
           { label: '火災保険', value: insurance, note: insurance > 0 ? '2年間の保険料' : '' },
           { label: '鍵交換代', value: keyChangeFee, note: '' },
           { label: '保証会社保証料', value: guaranteeFeeCost, note: guaranteeFee > 0 ? `賃料総額の${guaranteeFee}%` : '' },
@@ -941,6 +1044,28 @@
           summaryList.appendChild(row);
         });
 
+        // 前払い家賃以外小計を最後に追加
+        const nonRentSubtotalRow = document.createElement('div');
+        nonRentSubtotalRow.className = 'summary-item subtotal-highlight';
+        nonRentSubtotalRow.style.borderTop = '2px solid var(--border-color)';
+        nonRentSubtotalRow.style.paddingTop = '1rem';
+        nonRentSubtotalRow.style.marginTop = '0.5rem';
+
+        const nonRentLeft = document.createElement('div');
+        const nonRentLabel = document.createElement('div');
+        nonRentLabel.className = 'label';
+        nonRentLabel.style.fontWeight = '700';
+        nonRentLabel.textContent = '前払い家賃以外小計';
+        nonRentLeft.appendChild(nonRentLabel);
+
+        const nonRentValue = document.createElement('div');
+        nonRentValue.className = 'value';
+        nonRentValue.style.fontSize = '1.1em';
+        nonRentValue.textContent = `${nonRentTotal.toLocaleString()} 円`;
+
+        nonRentSubtotalRow.appendChild(nonRentLeft);
+        nonRentSubtotalRow.appendChild(nonRentValue);
+        summaryList.appendChild(nonRentSubtotalRow);
       }
 
       saveToStorage() {
@@ -948,20 +1073,28 @@
         this.fields.forEach(id => {
           data[id] = document.getElementById(id)?.value || '';
         });
-        localStorage.setItem(this.storageKey, JSON.stringify(data));
+        try {
+          localStorage.setItem(this.storageKey, JSON.stringify(data));
+        } catch (e) {
+          console.error('ローカルストレージへの保存に失敗しました:', e);
+        }
       }
 
       loadFromStorage() {
-        const saved = localStorage.getItem(this.storageKey);
-        if (saved) {
-          const data = JSON.parse(saved);
-          this.fields.forEach(id => {
-            if (data[id] !== undefined) {
-              const el = document.getElementById(id);
-              if (el) el.value = data[id];
-            }
-          });
-          return true;
+        try {
+          const saved = localStorage.getItem(this.storageKey);
+          if (saved) {
+            const data = JSON.parse(saved);
+            this.fields.forEach(id => {
+              if (data[id] !== undefined) {
+                const el = document.getElementById(id);
+                if (el) el.value = data[id];
+              }
+            });
+            return true;
+          }
+        } catch (e) {
+          console.error('ローカルストレージからの読み込みに失敗しました:', e);
         }
         return false;
       }
@@ -988,28 +1121,63 @@
         return hasParams;
       }
 
-      reset() {
-        if (!confirm('入力内容をリセットしますか？')) return;
+      applyDefaults() {
+        // デフォルト値を適用
+        Object.keys(DEFAULTS).forEach(key => {
+          const el = document.getElementById(key);
+          if (el && el.value === '') {
+            el.value = String(DEFAULTS[key]);
+          }
+        });
 
+        // 入居日のデフォルト値
+        const moveInDateEl = document.getElementById('moveInDate');
+        if (moveInDateEl && !moveInDateEl.value) {
+          moveInDateEl.value = this.getDefaultMoveInDate();
+        }
+      }
+
+      getDefaultMoveInDate() {
+        const today = new Date();
+        const currentDay = today.getDate();
+        
+        let targetDate;
+        if (currentDay >= 1 && currentDay <= 15) {
+          // 1日から15日の場合は当月20日
+          targetDate = new Date(today.getFullYear(), today.getMonth(), 20);
+        } else {
+          // 16日から31日の場合は翌月10日
+          targetDate = new Date(today.getFullYear(), today.getMonth() + 1, 10);
+        }
+        
+        const year = targetDate.getFullYear();
+        const month = String(targetDate.getMonth() + 1).padStart(2, '0');
+        const day = String(targetDate.getDate()).padStart(2, '0');
+        return `${year}-${month}-${day}`;
+      }
+
+      reset() {
+        if (!confirm('入力内容をリセットしますか?')) return;
+
+        // すべてクリア
         this.fields.forEach(id => {
           const el = document.getElementById(id);
           if (el) el.value = '';
         });
 
         // デフォルト値設定
-        document.getElementById('rent').value = '53700';
-        document.getElementById('managementFee').value = '0';
-        document.getElementById('deposit').value = '1';
-        document.getElementById('keyMoney').value = '1';
-        document.getElementById('insurance').value = '20000';
-        document.getElementById('guaranteeFee').value = '50';
-        document.getElementById('agencyFee').value = '110';
-        document.getElementById('moveInDate').value = this.getDefaultMoveInDate();
+        this.applyDefaults();
 
-        localStorage.removeItem(this.storageKey);
+        try {
+          localStorage.removeItem(this.storageKey);
+        } catch (e) {
+          console.error('ローカルストレージのクリアに失敗しました:', e);
+        }
+
         this.clearError('moveInDate');
         this.clearError('rent');
         this.calculate();
+        this.showToast('入力内容をリセットしました');
       }
 
       async share() {
@@ -1039,7 +1207,7 @@
         // クリップボードにコピー
         try {
           await navigator.clipboard.writeText(url);
-          this.showToast('URLをコピーしました！');
+          this.showToast('URLをコピーしました!');
         } catch {
           prompt('以下のURLをコピーしてください:', url);
         }
@@ -1053,10 +1221,14 @@
       }
 
       initTheme() {
-        const saved = localStorage.getItem('theme');
-        if (saved === 'dark') {
-          document.documentElement.setAttribute('data-theme', 'dark');
-          document.getElementById('themeToggle').textContent = '☀️';
+        try {
+          const saved = localStorage.getItem('theme');
+          if (saved === 'dark') {
+            document.documentElement.setAttribute('data-theme', 'dark');
+            document.getElementById('themeToggle').textContent = '☀️';
+          }
+        } catch (e) {
+          console.error('テーマ設定の読み込みに失敗しました:', e);
         }
       }
 
@@ -1065,11 +1237,19 @@
         if (isDark) {
           document.documentElement.removeAttribute('data-theme');
           document.getElementById('themeToggle').textContent = '🌙';
-          localStorage.setItem('theme', 'light');
+          try {
+            localStorage.setItem('theme', 'light');
+          } catch (e) {
+            console.error('テーマ設定の保存に失敗しました:', e);
+          }
         } else {
           document.documentElement.setAttribute('data-theme', 'dark');
           document.getElementById('themeToggle').textContent = '☀️';
-          localStorage.setItem('theme', 'dark');
+          try {
+            localStorage.setItem('theme', 'dark');
+          } catch (e) {
+            console.error('テーマ設定の保存に失敗しました:', e);
+          }
         }
       }
     }
@@ -1087,36 +1267,3 @@
 </body>
 
 </html>
-      applyDefaults() {
-        const moveInDateEl = document.getElementById('moveInDate');
-        if (moveInDateEl && !moveInDateEl.value) {
-          moveInDateEl.value = this.getDefaultMoveInDate();
-        }
-
-        const rentEl = document.getElementById('rent');
-        if (rentEl && !rentEl.value) rentEl.value = '53700';
-      }
-
-      getDefaultMoveInDate() {
-        const today = new Date();
-        const year = today.getFullYear();
-        const month = today.getMonth();
-        const day = today.getDate();
-
-        let targetYear = year;
-        let targetMonth = month;
-        let targetDay = 20;
-        if (day > 20) {
-          targetDay = 10;
-          targetMonth = month + 1;
-          if (targetMonth > 11) {
-            targetMonth = 0;
-            targetYear = year + 1;
-          }
-        }
-
-        const y = String(targetYear).padStart(4, '0');
-        const m = String(targetMonth + 1).padStart(2, '0');
-        const d = String(targetDay).padStart(2, '0');
-        return `${y}-${m}-${d}`;
-      }
