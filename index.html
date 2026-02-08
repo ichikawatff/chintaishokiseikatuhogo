@@ -375,7 +375,7 @@
 
     .summary-item {
       display: grid;
-      grid-template-columns: 1fr auto;
+      grid-template-columns: auto 1fr auto;
       gap: 1rem;
       padding: 0.75rem;
       background: var(--bg-secondary);
@@ -407,8 +407,10 @@
     }
 
     .summary-item .note {
-      font-size: 0.8rem;
+      font-size: 0.75rem;
       color: var(--text-muted);
+      white-space: nowrap;
+      text-align: left;
     }
 
     .summary-item .value {
@@ -716,38 +718,28 @@
 
         <div class="subtotal-list" aria-live="polite">
           <div class="summary-item">
-            <div>
-              <div class="label">前家賃</div>
-              <div class="note" id="advanceRentNote"></div>
-            </div>
+            <div class="label">前家賃</div>
+            <div class="note" id="advanceRentNote"></div>
             <div class="value" id="advanceRentValue">0 円</div>
           </div>
           <div class="summary-item">
-            <div>
-              <div class="label">前管理費</div>
-              <div class="note" id="advanceManagementNote"></div>
-            </div>
+            <div class="label">前管理費</div>
+            <div class="note" id="advanceManagementNote"></div>
             <div class="value" id="advanceManagementValue">0 円</div>
           </div>
           <div class="summary-item">
-            <div>
-              <div class="label">日割り家賃</div>
-              <div class="note" id="dailyRentNote"></div>
-            </div>
+            <div class="label">日割り家賃</div>
+            <div class="note" id="dailyRentNote"></div>
             <div class="value" id="dailyRentValue">0 円</div>
           </div>
           <div class="summary-item">
-            <div>
-              <div class="label">日割り管理費</div>
-              <div class="note" id="dailyManagementNote"></div>
-            </div>
+            <div class="label">日割り管理費</div>
+            <div class="note" id="dailyManagementNote"></div>
             <div class="value" id="dailyManagementValue">0 円</div>
           </div>
           <div class="summary-item subtotal-highlight" style="border-top: 2px solid var(--border-color); padding-top: 1rem; margin-top: 0.5rem;">
-            <div>
-              <div class="label" style="font-weight: 700;">前払い家賃小計</div>
-              <div class="note">上記4項目の合計</div>
-            </div>
+            <div class="label" style="font-weight: 700;">前払い家賃小計</div>
+            <div class="note">上記4項目の合計</div>
             <div class="value" id="prepayTotal" style="font-size: 1.1em;">0 円</div>
           </div>
         </div>
@@ -988,18 +980,18 @@
         // 表示更新
         document.getElementById('totalAmount').textContent = `${totalCost.toLocaleString()} 円`;
         
-        // 前払い家賃の内訳を個別表示
-        document.getElementById('advanceRentValue').textContent = `${advanceRent.toLocaleString()} 円`;
+        // 前払い家賃の内訳を個別表示(項目、note、金額を同じ行に)
         document.getElementById('advanceRentNote').textContent = moveInDate ? `${nextMonth}月分` : '';
+        document.getElementById('advanceRentValue').textContent = `${advanceRent.toLocaleString()} 円`;
         
-        document.getElementById('advanceManagementValue').textContent = `${advanceManagementFee.toLocaleString()} 円`;
         document.getElementById('advanceManagementNote').textContent = managementFee > 0 && moveInDate ? `${nextMonth}月分` : '';
+        document.getElementById('advanceManagementValue').textContent = `${advanceManagementFee.toLocaleString()} 円`;
         
-        document.getElementById('dailyRentValue').textContent = `${dailyRent.toLocaleString()} 円`;
         document.getElementById('dailyRentNote').textContent = moveInDate ? `${currentMonth}月分 ${daysRemaining}日/${daysInMonth}日` : '';
+        document.getElementById('dailyRentValue').textContent = `${dailyRent.toLocaleString()} 円`;
         
-        document.getElementById('dailyManagementValue').textContent = `${dailyManagementFee.toLocaleString()} 円`;
         document.getElementById('dailyManagementNote').textContent = moveInDate && managementFee > 0 ? `${currentMonth}月分 ${daysRemaining}日/${daysInMonth}日` : '';
+        document.getElementById('dailyManagementValue').textContent = `${dailyManagementFee.toLocaleString()} 円`;
         
         document.getElementById('prepayTotal').textContent = `${prepayTotal.toLocaleString()} 円`;
 
@@ -1022,24 +1014,20 @@
           const row = document.createElement('div');
           row.className = 'summary-item';
 
-          const left = document.createElement('div');
           const label = document.createElement('div');
           label.className = 'label';
           label.textContent = item.label;
-          left.appendChild(label);
 
-          if (item.note) {
-            const note = document.createElement('div');
-            note.className = 'note';
-            note.textContent = item.note;
-            left.appendChild(note);
-          }
+          const note = document.createElement('div');
+          note.className = 'note';
+          note.textContent = item.note || '';
 
           const value = document.createElement('div');
           value.className = 'value';
           value.textContent = `${item.value.toLocaleString()} 円`;
 
-          row.appendChild(left);
+          row.appendChild(label);
+          row.appendChild(note);
           row.appendChild(value);
           summaryList.appendChild(row);
         });
@@ -1051,19 +1039,22 @@
         nonRentSubtotalRow.style.paddingTop = '1rem';
         nonRentSubtotalRow.style.marginTop = '0.5rem';
 
-        const nonRentLeft = document.createElement('div');
         const nonRentLabel = document.createElement('div');
         nonRentLabel.className = 'label';
         nonRentLabel.style.fontWeight = '700';
         nonRentLabel.textContent = '前払い家賃以外小計';
-        nonRentLeft.appendChild(nonRentLabel);
+
+        const nonRentNote = document.createElement('div');
+        nonRentNote.className = 'note';
+        nonRentNote.textContent = '';
 
         const nonRentValue = document.createElement('div');
         nonRentValue.className = 'value';
         nonRentValue.style.fontSize = '1.1em';
         nonRentValue.textContent = `${nonRentTotal.toLocaleString()} 円`;
 
-        nonRentSubtotalRow.appendChild(nonRentLeft);
+        nonRentSubtotalRow.appendChild(nonRentLabel);
+        nonRentSubtotalRow.appendChild(nonRentNote);
         nonRentSubtotalRow.appendChild(nonRentValue);
         summaryList.appendChild(nonRentSubtotalRow);
       }
