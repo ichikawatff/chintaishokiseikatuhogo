@@ -1,9 +1,8 @@
-const CACHE_NAME = 'rent-calculator-v1';
+const CACHE_NAME = 'rent-calculator-v3';
 const ASSETS = [
   './',
   './index.html',
-  './manifest.json',
-  'https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js'
+  './manifest.json'
 ];
 
 // インストール時にアセットをキャッシュ

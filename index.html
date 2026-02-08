@@ -19,9 +19,6 @@
 
   <title>賃貸初期費用シミュレーター</title>
 
-  <!-- Chart.js CDN -->
-  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
-
   <style>
     /* CSS変数 */
     :root {
@@ -55,7 +52,7 @@
       --font-size-xl: clamp(24px, 4vw, 36px);
     }
 
-    /* ダークモード */
+    /* ダークモード（自動） */
     @media (prefers-color-scheme: dark) {
       :root {
         --bg-primary: #1a202c;
@@ -67,6 +64,18 @@
         --border-color: #4a5568;
         --shadow: 0 10px 40px rgba(0, 0, 0, 0.3);
       }
+    }
+
+    /* ダークモード（手動トグル） */
+    :root[data-theme="dark"] {
+      --bg-primary: #1a202c;
+      --bg-secondary: #2d3748;
+      --bg-card: rgba(45, 55, 72, 0.95);
+      --text-primary: #f7fafc;
+      --text-secondary: #e2e8f0;
+      --text-muted: #a0aec0;
+      --border-color: #4a5568;
+      --shadow: 0 10px 40px rgba(0, 0, 0, 0.3);
     }
 
     /* リセット & ベース */
@@ -92,6 +101,10 @@
       body {
         background: linear-gradient(135deg, #1a202c 0%, #2d3748 100%);
       }
+    }
+
+    :root[data-theme="dark"] body {
+      background: linear-gradient(135deg, #1a202c 0%, #2d3748 100%);
     }
 
     /* ヘッダー */
@@ -272,6 +285,10 @@
       display: none;
     }
 
+    .error-message.show {
+      display: block;
+    }
+
     /* ボタン */
     .button-group {
       display: grid;
@@ -388,16 +405,12 @@
       text-align: right;
     }
 
-    /* グラフ */
-    .chart-container {
-      margin-top: 1.5rem;
-      padding: 1rem;
-      background: var(--bg-secondary);
-      border-radius: var(--radius-sm);
-    }
-
-    .chart-container canvas {
-      max-height: 300px;
+    /* 小計 */
+    .subtotal-list {
+      display: flex;
+      flex-direction: column;
+      gap: 0.75rem;
+      margin-bottom: 1.5rem;
     }
 
     /* 注意事項 */
@@ -575,7 +588,7 @@
             <label for="managementFee">
               月額管理費（円）
             </label>
-            <input type="number" id="managementFee" value="5000" min="0" max="100000">
+            <input type="number" id="managementFee" value="0" min="0" max="100000">
           </div>
 
           <div class="form-group">
@@ -591,7 +604,7 @@
               礼金（ヶ月）
               <span class="tooltip-icon" data-tooltip="通常0〜2ヶ月分">?</span>
             </label>
-            <input type="number" id="keyMoney" value="1" min="0" max="12" step="0.1">
+            <input type="number" id="keyMoney" value="2" min="0" max="12" step="0.1">
           </div>
 
           <div class="form-group">
@@ -609,7 +622,7 @@
               保証会社保証料（%）
               <span class="tooltip-icon" data-tooltip="月額賃料+管理費の合計に対する割合">?</span>
             </label>
-            <input type="number" id="guaranteeFee" value="50" min="0" max="200" step="0.1">
+            <input type="number" id="guaranteeFee" value="100" min="0" max="200" step="0.1">
           </div>
 
           <div class="form-group">
@@ -659,12 +672,24 @@
           <span class="amount" id="totalAmount">0 円</span>
         </div>
 
-        <div class="summary-list" id="summaryList">
-          <!-- 動的に生成 -->
+        <div class="subtotal-list" aria-live="polite">
+          <div class="summary-item">
+            <div>
+              <div class="label">前払い家賃合計</div>
+              <div class="note">前家賃・前管理費・日割り家賃・日割り管理費</div>
+            </div>
+            <div class="value" id="prepayTotal">0 円</div>
+          </div>
+          <div class="summary-item">
+            <div>
+              <div class="label">家賃以外合計</div>
+            </div>
+            <div class="value" id="nonRentTotal">0 円</div>
+          </div>
         </div>
 
-        <div class="chart-container">
-          <canvas id="costChart" aria-label="費用内訳グラフ"></canvas>
+        <div class="summary-list" id="summaryList">
+          <!-- 動的に生成 -->
         </div>
       </section>
     </div>
@@ -690,8 +715,11 @@
     class CostCalculator {
       constructor() {
         this.form = document.getElementById('calculatorForm');
-        this.chart = null;
         this.storageKey = 'rentCalculatorData';
+        this.errorIds = {
+          moveInDate: 'error-moveInDate',
+          rent: 'error-rent'
+        };
         this.fields = [
           'moveInDate', 'rent', 'deposit', 'keyMoney',
           'managementFee', 'insurance', 'keyChangeFee',
@@ -725,19 +753,74 @@
         });
 
         // 初期化
-        this.loadFromURL() || this.loadFromStorage();
-        this.applyDefaultDate();
+        const loaded = this.loadFromURL() || this.loadFromStorage();
+        if (!loaded) this.applyDefaults();
         this.initTheme();
-        this.initChart();
         this.calculate();
       }
 
       getValue(id) {
-        return parseFloat(document.getElementById(id)?.value) || 0;
+        return this.toNumber(document.getElementById(id)?.value);
       }
 
       getDateValue(id) {
         return document.getElementById(id)?.value || '';
+      }
+
+      toNumber(value) {
+        if (value === null || value === undefined || value === '') return 0;
+        const num = Number(value);
+        if (!Number.isFinite(num)) return 0;
+        return num;
+      }
+
+      isValidDateString(value) {
+        if (!value) return false;
+        const d = new Date(value);
+        return !Number.isNaN(d.getTime());
+      }
+
+      setError(id, message) {
+        const input = document.getElementById(id);
+        const errorId = this.errorIds[id];
+        const errorEl = errorId ? document.getElementById(errorId) : null;
+        if (input) input.classList.add('error');
+        if (errorEl) {
+          errorEl.textContent = message;
+          errorEl.classList.add('show');
+        }
+      }
+
+      clearError(id) {
+        const input = document.getElementById(id);
+        const errorId = this.errorIds[id];
+        const errorEl = errorId ? document.getElementById(errorId) : null;
+        if (input) input.classList.remove('error');
+        if (errorEl) {
+          errorEl.textContent = '';
+          errorEl.classList.remove('show');
+        }
+      }
+
+      validate() {
+        let ok = true;
+        this.clearError('moveInDate');
+        this.clearError('rent');
+
+        const moveInDate = this.getDateValue('moveInDate');
+        if (moveInDate && !this.isValidDateString(moveInDate)) {
+          this.setError('moveInDate', '正しい日付を入力してください。');
+          ok = false;
+        }
+
+        const rentRaw = document.getElementById('rent')?.value;
+        const rent = this.toNumber(rentRaw);
+        if (!rentRaw || rent <= 0) {
+          this.setError('rent', '家賃は1円以上で入力してください。');
+          ok = false;
+        }
+
+        return ok;
       }
 
       calculateDaysInMonth(year, month) {
@@ -746,6 +829,9 @@
 
       calculateDailyFees(rent, managementFee, moveInDate) {
         const moveIn = new Date(moveInDate);
+        if (Number.isNaN(moveIn.getTime())) {
+          return { dailyRent: 0, dailyManagementFee: 0, daysRemaining: 0, daysInMonth: 0, currentMonth: 0 };
+        }
         const year = moveIn.getFullYear();
         const month = moveIn.getMonth() + 1;
         const daysInMonth = this.calculateDaysInMonth(year, month);
@@ -767,6 +853,16 @@
         const agencyFee = this.getValue('agencyFee');
         const otherCost1 = this.getValue('otherCost1');
         const otherCost2 = this.getValue('otherCost2');
+
+        // バリデーション
+        if (!this.validate()) {
+          document.getElementById('totalAmount').textContent = `0 円`;
+          document.getElementById('prepayTotal').textContent = `0 円`;
+          document.getElementById('nonRentTotal').textContent = `0 円`;
+          const summaryList = document.getElementById('summaryList');
+          summaryList.innerHTML = '';
+          return;
+        }
 
         // 計算
         const depositCost = Math.round(rent * deposit);
@@ -792,8 +888,13 @@
           guaranteeFeeCost + agencyFeeCost + advanceRent + advanceManagementFee +
           otherCost1 + otherCost2 + dailyRent + dailyManagementFee;
 
+        const prepayTotal = advanceRent + advanceManagementFee + dailyRent + dailyManagementFee;
+        const nonRentTotal = totalCost - prepayTotal;
+
         // 表示更新
         document.getElementById('totalAmount').textContent = `${totalCost.toLocaleString()} 円`;
+        document.getElementById('prepayTotal').textContent = `${prepayTotal.toLocaleString()} 円`;
+        document.getElementById('nonRentTotal').textContent = `${nonRentTotal.toLocaleString()} 円`;
 
         // 内訳データ
         const items = [
@@ -813,58 +914,33 @@
 
         // 内訳リスト更新
         const summaryList = document.getElementById('summaryList');
-        summaryList.innerHTML = items.map(item => `
-          <div class="summary-item">
-            <div>
-              <div class="label">${item.label}</div>
-              ${item.note ? `<div class="note">${item.note}</div>` : ''}
-            </div>
-            <div class="value">${item.value.toLocaleString()} 円</div>
-          </div>
-        `).join('');
+        summaryList.innerHTML = '';
+        items.forEach(item => {
+          const row = document.createElement('div');
+          row.className = 'summary-item';
 
-        // グラフ更新
-        this.updateChart(items);
-      }
+          const left = document.createElement('div');
+          const label = document.createElement('div');
+          label.className = 'label';
+          label.textContent = item.label;
+          left.appendChild(label);
 
-      initChart() {
-        const ctx = document.getElementById('costChart').getContext('2d');
-        this.chart = new Chart(ctx, {
-          type: 'doughnut',
-          data: {
-            labels: [],
-            datasets: [{
-              data: [],
-              backgroundColor: [
-                '#667eea', '#764ba2', '#48bb78', '#f6ad55',
-                '#fc8181', '#63b3ed', '#b794f4', '#f687b3',
-                '#68d391', '#fbd38d', '#feb2b2', '#90cdf4'
-              ],
-              borderWidth: 0
-            }]
-          },
-          options: {
-            responsive: true,
-            maintainAspectRatio: false,
-            plugins: {
-              legend: {
-                position: 'bottom',
-                labels: {
-                  padding: 15,
-                  usePointStyle: true,
-                  font: { size: 11 }
-                }
-              }
-            }
+          if (item.note) {
+            const note = document.createElement('div');
+            note.className = 'note';
+            note.textContent = item.note;
+            left.appendChild(note);
           }
-        });
-      }
 
-      updateChart(items) {
-        if (!this.chart) return;
-        this.chart.data.labels = items.map(i => i.label);
-        this.chart.data.datasets[0].data = items.map(i => i.value);
-        this.chart.update();
+          const value = document.createElement('div');
+          value.className = 'value';
+          value.textContent = `${item.value.toLocaleString()} 円`;
+
+          row.appendChild(left);
+          row.appendChild(value);
+          summaryList.appendChild(row);
+        });
+
       }
 
       saveToStorage() {
@@ -896,7 +972,16 @@
         this.fields.forEach(id => {
           const value = params.get(id);
           if (value !== null) {
-            document.getElementById(id).value = value;
+            const el = document.getElementById(id);
+            if (!el) return;
+            if (el.type === 'number') {
+              const num = this.toNumber(value);
+              el.value = Number.isFinite(num) ? String(num) : '';
+            } else if (el.type === 'date') {
+              el.value = this.isValidDateString(value) ? value : '';
+            } else {
+              el.value = value;
+            }
             hasParams = true;
           }
         });
@@ -913,15 +998,17 @@
 
         // デフォルト値設定
         document.getElementById('rent').value = '53700';
-        document.getElementById('managementFee').value = '5000';
+        document.getElementById('managementFee').value = '0';
         document.getElementById('deposit').value = '1';
         document.getElementById('keyMoney').value = '1';
         document.getElementById('insurance').value = '20000';
         document.getElementById('guaranteeFee').value = '50';
         document.getElementById('agencyFee').value = '110';
-        this.applyDefaultDate();
+        document.getElementById('moveInDate').value = this.getDefaultMoveInDate();
 
         localStorage.removeItem(this.storageKey);
+        this.clearError('moveInDate');
+        this.clearError('rent');
         this.calculate();
       }
 
@@ -985,17 +1072,6 @@
           localStorage.setItem('theme', 'dark');
         }
       }
-
-      applyDefaultDate() {
-        const moveInDateField = document.getElementById('moveInDate');
-        if (!moveInDateField || moveInDateField.value) return;
-        const today = new Date();
-        const defaultDate = new Date(today.getFullYear(), today.getMonth(), 20);
-        const year = defaultDate.getFullYear();
-        const month = String(defaultDate.getMonth() + 1).padStart(2, '0');
-        const day = String(defaultDate.getDate()).padStart(2, '0');
-        moveInDateField.value = `${year}-${month}-${day}`;
-      }
     }
 
     // 初期化
@@ -1011,3 +1087,36 @@
 </body>
 
 </html>
+      applyDefaults() {
+        const moveInDateEl = document.getElementById('moveInDate');
+        if (moveInDateEl && !moveInDateEl.value) {
+          moveInDateEl.value = this.getDefaultMoveInDate();
+        }
+
+        const rentEl = document.getElementById('rent');
+        if (rentEl && !rentEl.value) rentEl.value = '53700';
+      }
+
+      getDefaultMoveInDate() {
+        const today = new Date();
+        const year = today.getFullYear();
+        const month = today.getMonth();
+        const day = today.getDate();
+
+        let targetYear = year;
+        let targetMonth = month;
+        let targetDay = 20;
+        if (day > 20) {
+          targetDay = 10;
+          targetMonth = month + 1;
+          if (targetMonth > 11) {
+            targetMonth = 0;
+            targetYear = year + 1;
+          }
+        }
+
+        const y = String(targetYear).padStart(4, '0');
+        const m = String(targetMonth + 1).padStart(2, '0');
+        const d = String(targetDay).padStart(2, '0');
+        return `${y}-${m}-${d}`;
+      }
