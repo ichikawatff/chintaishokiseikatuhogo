@@ -943,7 +943,6 @@
         }
         const year = moveIn.getFullYear();
         const month = moveIn.getMonth() + 1;
-
         let daysInMonth;
         if (daysMode === 'actual') {
           daysInMonth = this.calculateDaysInMonth(year, month);
@@ -1028,7 +1027,6 @@
 
         // 表示更新
         document.getElementById('totalAmount').textContent = `${totalCost.toLocaleString()} 円`;
-
         // 前払い家賃の内訳を個別表示(項目、note、金額を同じ行に)
         document.getElementById('advanceRentNote').textContent = moveInDate ? `${nextMonth}月分` : '';
         document.getElementById('advanceRentValue').textContent = `${advanceRent.toLocaleString()} 円`;
@@ -1041,7 +1039,6 @@
 
         document.getElementById('dailyManagementNote').textContent = moveInDate && managementFee > 0 ? `${currentMonth}月分 ${daysRemaining}日/${daysInMonth}日` : '';
         document.getElementById('dailyManagementValue').textContent = `${dailyManagementFee.toLocaleString()} 円`;
-
         document.getElementById('prepayTotal').textContent = `${prepayTotal.toLocaleString()} 円`;
 
         // 内訳データ(前払い家賃関連は上部で表示済みのため除外)
