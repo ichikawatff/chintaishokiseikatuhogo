@@ -4,20 +4,20 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <meta name="description" content="日本の賃貸物件を借りる際の初期費用を簡単に計算できる無料シミュレーター。敷金・礼金・仲介手数料など全ての費用を自動計算。">
-  <meta name="keywords" content="賃貸, 初期費用, シミュレーター, 計算, 敷金, 礼金, 仲介手数料">
+  <meta name="description" content="生活保護を利用して賃貸物件へ入居する際の初期費用を概算できるシミュレーター。敷金・礼金・仲介手数料などの内訳を自動計算します。">
+  <meta name="keywords" content="生活保護, 賃貸, 初期費用, シミュレーター, 計算, 敷金, 礼金, 仲介手数料">
   <meta name="theme-color" content="#667eea">
 
   <!-- OGP -->
-  <meta property="og:title" content="賃貸初期費用シミュレーター">
-  <meta property="og:description" content="賃貸物件の初期費用を簡単計算。敷金・礼金・仲介手数料などを自動計算。">
+  <meta property="og:title" content="生活保護向け 賃貸初期費用シミュレーター">
+  <meta property="og:description" content="生活保護を利用して賃貸物件へ入居する際の初期費用を概算します。">
   <meta property="og:type" content="website">
 
   <!-- PWA -->
   <link rel="manifest" href="manifest.json">
-  <link rel="apple-touch-icon" href="icon-192.png">
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🏠</text></svg>">
 
-  <title>賃貸初期費用シミュレーター</title>
+  <title>生活保護向け 賃貸初期費用シミュレーター</title>
 
   <style>
     /* CSS変数 */
@@ -289,6 +289,20 @@
       display: block;
     }
 
+    .error-summary {
+      display: none;
+      padding: 0.75rem 1rem;
+      color: #9b2c2c;
+      background: rgba(252, 129, 129, 0.15);
+      border: 1px solid var(--danger);
+      border-radius: var(--radius-sm);
+      font-size: 0.85rem;
+    }
+
+    .error-summary.show {
+      display: block;
+    }
+
     /* ボタン */
     .button-group {
       display: grid;
@@ -364,6 +378,17 @@
       font-size: var(--font-size-xl);
       display: block;
       margin-top: 0.5rem;
+    }
+
+    .estimate-comment {
+      margin: -0.5rem 0 1.5rem;
+      padding: 0.85rem 1rem;
+      background: rgba(99, 179, 237, 0.12);
+      border-left: 4px solid var(--info);
+      border-radius: var(--radius-sm);
+      color: var(--text-secondary);
+      font-weight: 600;
+      text-align: center;
     }
 
     /* 内訳リスト */
@@ -457,18 +482,29 @@
       background: linear-gradient(135deg, rgba(102, 126, 234, 0.25), rgba(118, 75, 162, 0.25)) !important;
     }
 
-    /* 注意事項 */
-    .note-box {
-      background: linear-gradient(135deg, rgba(99, 179, 237, 0.1), rgba(102, 126, 234, 0.1));
-      border-left: 4px solid var(--info);
-      padding: 1rem;
-      border-radius: var(--radius-sm);
+    /* 備考・注意事項 */
+    .remarks {
       margin-top: 1.5rem;
+      padding: 1rem 1.25rem;
+      background: rgba(246, 173, 85, 0.12);
+      border: 1px solid rgba(246, 173, 85, 0.55);
+      border-radius: var(--radius-sm);
+      color: var(--text-secondary);
       font-size: 0.85rem;
     }
 
-    .note-box strong {
-      color: var(--info);
+    .remarks h3 {
+      margin-bottom: 0.5rem;
+      color: var(--text-primary);
+      font-size: 1rem;
+    }
+
+    .remarks ul {
+      padding-left: 1.25rem;
+    }
+
+    .remarks li + li {
+      margin-top: 0.35rem;
     }
 
     /* 成功メッセージ */
@@ -574,6 +610,17 @@
         box-shadow: none;
         border: 1px solid #ddd;
       }
+
+      .result-total {
+        animation: none;
+        print-color-adjust: exact;
+        -webkit-print-color-adjust: exact;
+      }
+
+      .estimate-comment,
+      .remarks {
+        break-inside: avoid;
+      }
     }
 
     /* モバイル対応 */
@@ -601,8 +648,8 @@
   <button class="theme-toggle" id="themeToggle" aria-label="ダークモード切り替え">🌙</button>
 
   <header>
-    <h1>🏠 賃貸初期費用シミュレーター</h1>
-    <p class="subtitle">引越し前に初期費用を簡単チェック</p>
+    <h1>🏠 生活保護向け 賃貸初期費用シミュレーター</h1>
+    <p class="subtitle">賃貸住宅へ入居する際の初期費用を概算します</p>
   </header>
 
   <main>
@@ -612,6 +659,7 @@
         <h2 class="card-title" id="form-title">📝 条件を入力</h2>
 
         <form id="calculatorForm" novalidate>
+          <div class="error-summary" id="formErrorSummary" role="alert" aria-live="assertive"></div>
           <div class="form-group">
             <label for="moveInDate">
               入居年月日 <span class="required">*</span>
@@ -723,14 +771,6 @@
           </div>
         </form>
 
-        <div class="note-box">
-          <strong>📌 注意事項</strong><br>
-          ・日割り計算は入居日から月末までの日数で計算されます<br>
-          ・端数処理や計算日数は設定で変更可能です<br>
-          ・保証料は賃料と管理費の合計額に対して計算されます<br>
-          ・仲介手数料は法的上限の110%(税込)までです<br>
-          ・実際の費用は物件や不動産会社により異なる場合があります
-        </div>
       </section>
 
       <!-- 結果表示 -->
@@ -741,6 +781,8 @@
           初期費用合計
           <span class="amount" id="totalAmount">0 円</span>
         </div>
+
+        <p class="estimate-comment" id="estimateComment" aria-live="polite"></p>
 
         <div class="subtotal-list" aria-live="polite">
           <div class="summary-item">
@@ -774,6 +816,20 @@
         <div class="summary-list" id="summaryList">
           <!-- 動的に生成 -->
         </div>
+
+        <aside class="remarks" aria-labelledby="remarks-title">
+          <h3 id="remarks-title">備考・注意点</h3>
+          <ul>
+            <li>この結果は入力内容に基づく概算であり、賃貸借契約の請求額や生活保護の支給額を確定するものではありません。</li>
+            <li id="dailyCalculationRemark">日割り家賃・管理費は、入居日を含めて月末までの日数で計算します。</li>
+            <li>前家賃・前管理費は、入居月の翌月1ヶ月分として計算しています。</li>
+            <li>保証会社保証料は、月額家賃と月額管理費の合計に入力した割合を掛けて計算しています。</li>
+            <li>居住用建物の仲介手数料は、貸主・借主の合計で原則として賃料1.1ヶ月分以内（税込）です。借主から0.55ヶ月分を超えて受け取るには、媒介依頼時の承諾が必要です。</li>
+            <li>敷金、礼金、保険料、鍵交換代、保証料、仲介手数料などの対象可否と認定額は、世帯状況、地域、転居理由、自治体の取扱いなどにより異なります。</li>
+            <li>住宅扶助には地域や世帯人数などに応じた限度額があります。契約前に、見積書と物件資料を担当ケースワーカーまたは福祉事務所へ提示して確認してください。</li>
+            <li>このシミュレーターは自治体や福祉事務所の公式な判定ツールではありません。最終的な費用は、賃貸借契約書、不動産会社の見積書および福祉事務所の決定をご確認ください。</li>
+          </ul>
+        </aside>
       </section>
     </div>
   </main>
@@ -786,8 +842,8 @@
   {
     "@context": "https://schema.org",
     "@type": "WebApplication",
-    "name": "賃貸初期費用シミュレーター",
-    "description": "日本の賃貸物件を借りる際の初期費用を計算するツール",
+    "name": "生活保護向け 賃貸初期費用シミュレーター",
+    "description": "生活保護を利用して賃貸物件へ入居する際の初期費用を概算するツール",
     "applicationCategory": "FinanceApplication",
     "operatingSystem": "All"
   }
@@ -808,6 +864,20 @@
       otherCost2: 0,
       roundingMethod: 'floor',
       daysMode: 'actual'
+    };
+
+    const FIELD_LABELS = {
+      moveInDate: '入居年月日',
+      rent: '月額家賃',
+      managementFee: '月額管理費',
+      deposit: '敷金',
+      keyMoney: '礼金',
+      insurance: '火災保険',
+      keyChangeFee: '鍵交換代',
+      guaranteeFee: '保証会社保証料',
+      agencyFee: '仲介手数料',
+      otherCost1: 'その他費用1',
+      otherCost2: 'その他費用2'
     };
 
     // 計算機クラス
@@ -833,11 +903,13 @@
         // イベントリスナー設定
         this.form.addEventListener('submit', (e) => {
           e.preventDefault();
-          this.calculate();
+          this.calculate(true);
         });
 
         document.getElementById('resetBtn').addEventListener('click', () => this.reset());
-        document.getElementById('printBtn').addEventListener('click', () => window.print());
+        document.getElementById('printBtn').addEventListener('click', () => {
+          if (this.calculate(true)) window.print();
+        });
         document.getElementById('shareBtn').addEventListener('click', () => this.share());
         document.getElementById('themeToggle').addEventListener('click', () => this.toggleTheme());
 
@@ -875,16 +947,56 @@
       }
 
       isValidDateString(value) {
-        if (!value) return false;
-        const d = new Date(value);
-        return !Number.isNaN(d.getTime());
+        return this.parseLocalDate(value) !== null;
+      }
+
+      parseLocalDate(value) {
+        const match = /^(\d{4})-(\d{2})-(\d{2})$/.exec(value || '');
+        if (!match) return null;
+
+        const year = Number(match[1]);
+        const month = Number(match[2]);
+        const day = Number(match[3]);
+        const date = new Date(year, month - 1, day);
+
+        if (date.getFullYear() !== year || date.getMonth() !== month - 1 || date.getDate() !== day) {
+          return null;
+        }
+        return date;
+      }
+
+      formatJapaneseDate(value) {
+        const date = this.parseLocalDate(value);
+        if (!date) return '';
+        return `${date.getFullYear()}年${date.getMonth() + 1}月${date.getDate()}日`;
+      }
+
+      updateEstimateComment(moveInDate) {
+        const comment = document.getElementById('estimateComment');
+        const formattedDate = this.formatJapaneseDate(moveInDate);
+        comment.textContent = formattedDate
+          ? `${formattedDate}に入居した場合の概算です。`
+          : '入居年月日を入力すると、入居日を反映した概算を表示します。';
+      }
+
+      updateDailyCalculationRemark(moveInDate, roundingMethod, daysMode) {
+        const remark = document.getElementById('dailyCalculationRemark');
+        const date = this.parseLocalDate(moveInDate);
+        const denominator = daysMode === 'actual' && date
+          ? `${this.calculateDaysInMonth(date.getFullYear(), date.getMonth() + 1)}日（入居月の実日数）`
+          : daysMode === 'actual' ? '入居月の実日数' : `${daysMode}日固定`;
+        const rounding = roundingMethod === 'floor' ? '1円未満切り捨て' : '1円未満四捨五入';
+        remark.textContent = `日割り家賃・管理費は、入居日を含めて月末までの日数を対象に、分母${denominator}、${rounding}で計算しています。`;
       }
 
       setError(id, message) {
         const input = document.getElementById(id);
         const errorId = this.errorIds[id];
         const errorEl = errorId ? document.getElementById(errorId) : null;
-        if (input) input.classList.add('error');
+        if (input) {
+          input.classList.add('error');
+          input.setAttribute('aria-invalid', 'true');
+        }
         if (errorEl) {
           errorEl.textContent = message;
           errorEl.classList.add('show');
@@ -895,41 +1007,68 @@
         const input = document.getElementById(id);
         const errorId = this.errorIds[id];
         const errorEl = errorId ? document.getElementById(errorId) : null;
-        if (input) input.classList.remove('error');
+        if (input) {
+          input.classList.remove('error');
+          input.removeAttribute('aria-invalid');
+        }
         if (errorEl) {
           errorEl.textContent = '';
           errorEl.classList.remove('show');
         }
       }
 
-      validate() {
-        let ok = true;
-        this.clearError('moveInDate');
-        this.clearError('rent');
+      validate(focusOnError = false) {
+        const messages = [];
+        let firstInvalid = null;
+        const errorSummary = document.getElementById('formErrorSummary');
+
+        Object.keys(FIELD_LABELS).forEach(id => this.clearError(id));
+        errorSummary.textContent = '';
+        errorSummary.classList.remove('show');
+
+        const addError = (id, message) => {
+          this.setError(id, message);
+          messages.push(message);
+          if (!firstInvalid) firstInvalid = document.getElementById(id);
+        };
 
         const moveInDate = this.getDateValue('moveInDate');
-        if (moveInDate && !this.isValidDateString(moveInDate)) {
-          this.setError('moveInDate', '正しい日付を入力してください。');
-          ok = false;
+        if (!moveInDate) {
+          addError('moveInDate', '入居年月日を入力してください。');
+        } else if (!this.isValidDateString(moveInDate)) {
+          addError('moveInDate', '入居年月日を正しく入力してください。');
         }
 
-        const rentRaw = document.getElementById('rent')?.value;
-        const rent = this.toNumber(rentRaw);
-        if (!rentRaw || rent <= 0) {
-          this.setError('rent', '家賃は1円以上で入力してください。');
-          ok = false;
-        }
+        Object.keys(FIELD_LABELS).forEach(id => {
+          if (id === 'moveInDate') return;
+          const input = document.getElementById(id);
+          const raw = input?.value ?? '';
+          if (!input || (raw === '' && !input.required)) return;
 
-        // エラーがあれば最初のエラーにフォーカス
-        if (!ok) {
-          if (document.getElementById('moveInDate').classList.contains('error')) {
-            document.getElementById('moveInDate').focus();
-          } else if (document.getElementById('rent').classList.contains('error')) {
-            document.getElementById('rent').focus();
+          const value = Number(raw);
+          const min = input.min === '' ? null : Number(input.min);
+          const max = input.max === '' ? null : Number(input.max);
+          const label = FIELD_LABELS[id];
+
+          if (raw === '' || !Number.isFinite(value)) {
+            addError(id, `${label}を数値で入力してください。`);
+          } else if (id === 'rent' && value <= 0) {
+            addError(id, '月額家賃は1円以上で入力してください。');
+          } else if (min !== null && value < min) {
+            addError(id, `${label}は${min.toLocaleString()}以上で入力してください。`);
+          } else if (max !== null && value > max) {
+            addError(id, `${label}は${max.toLocaleString()}以下で入力してください。`);
           }
+        });
+
+        if (messages.length > 0) {
+          errorSummary.textContent = `入力内容を確認してください：${messages.join('／')}`;
+          errorSummary.classList.add('show');
+          if (focusOnError && firstInvalid) firstInvalid.focus();
+          return false;
         }
 
-        return ok;
+        return true;
       }
 
       calculateDaysInMonth(year, month) {
@@ -937,8 +1076,8 @@
       }
 
       calculateDailyFees(rent, managementFee, moveInDate, roundingMethod, daysMode) {
-        const moveIn = new Date(moveInDate);
-        if (Number.isNaN(moveIn.getTime())) {
+        const moveIn = this.parseLocalDate(moveInDate);
+        if (!moveIn) {
           return { dailyRent: 0, dailyManagementFee: 0, daysRemaining: 0, daysInMonth: 0, currentMonth: 0 };
         }
         const year = moveIn.getFullYear();
@@ -966,7 +1105,7 @@
         };
       }
 
-      calculate() {
+      calculate(focusOnError = false) {
         const moveInDate = this.getDateValue('moveInDate');
         const rent = this.getValue('rent');
         const managementFee = this.getValue('managementFee');
@@ -981,8 +1120,11 @@
         const roundingMethod = document.getElementById('roundingMethod')?.value || 'round';
         const daysMode = document.getElementById('daysMode')?.value || 'actual';
 
+        this.updateEstimateComment(moveInDate);
+        this.updateDailyCalculationRemark(moveInDate, roundingMethod, daysMode);
+
         // バリデーション
-        if (!this.validate()) {
+        if (!this.validate(focusOnError)) {
           document.getElementById('totalAmount').textContent = `0 円`;
           document.getElementById('advanceRentValue').textContent = `0 円`;
           document.getElementById('advanceRentNote').textContent = '';
@@ -995,7 +1137,7 @@
           document.getElementById('prepayTotal').textContent = `0 円`;
           const summaryList = document.getElementById('summaryList');
           summaryList.innerHTML = '';
-          return;
+          return false;
         }
 
         // 計算
@@ -1103,6 +1245,7 @@
         nonRentSubtotalRow.appendChild(nonRentNote);
         nonRentSubtotalRow.appendChild(nonRentValue);
         summaryList.appendChild(nonRentSubtotalRow);
+        return true;
       }
 
       saveToStorage() {
@@ -1176,16 +1319,7 @@
 
       getDefaultMoveInDate() {
         const today = new Date();
-        const currentDay = today.getDate();
-
-        let targetDate;
-        if (currentDay >= 1 && currentDay <= 15) {
-          // 1日から15日の場合は当月20日
-          targetDate = new Date(today.getFullYear(), today.getMonth(), 20);
-        } else {
-          // 16日から31日の場合は翌月10日
-          targetDate = new Date(today.getFullYear(), today.getMonth() + 1, 10);
-        }
+        const targetDate = new Date(today.getFullYear(), today.getMonth(), 20);
 
         const year = targetDate.getFullYear();
         const month = String(targetDate.getMonth() + 1).padStart(2, '0');
@@ -1230,7 +1364,7 @@
         if (navigator.share) {
           try {
             await navigator.share({
-              title: '賃貸初期費用シミュレーター',
+              title: '生活保護向け 賃貸初期費用シミュレーター',
               text: '初期費用の計算結果をシェア',
               url: url
             });

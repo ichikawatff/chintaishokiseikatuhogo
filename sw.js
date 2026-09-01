@@ -1,4 +1,4 @@
-const CACHE_NAME = 'rent-calculator-v3';
+const CACHE_NAME = 'rent-calculator-v4';
 const ASSETS = [
   './',
   './index.html',
