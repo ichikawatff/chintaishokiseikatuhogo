@@ -303,6 +303,78 @@
       display: block;
     }
 
+    /* その他費用 */
+    .custom-costs {
+      display: flex;
+      flex-direction: column;
+      gap: 0.75rem;
+      padding-top: 0.5rem;
+      border-top: 1px solid var(--border-color);
+    }
+
+    .custom-costs-title {
+      color: var(--text-secondary);
+      font-weight: 600;
+    }
+
+    .custom-costs-help {
+      margin-top: -0.5rem;
+      color: var(--text-muted);
+      font-size: 0.8rem;
+    }
+
+    .custom-cost-row {
+      display: grid;
+      grid-template-columns: minmax(0, 1.3fr) minmax(120px, 1fr) auto;
+      gap: 0.5rem;
+      align-items: end;
+      padding: 0.75rem;
+      background: rgba(99, 179, 237, 0.08);
+      border: 1px solid var(--border-color);
+      border-radius: var(--radius-sm);
+    }
+
+    .custom-cost-field {
+      display: flex;
+      min-width: 0;
+      flex-direction: column;
+      gap: 0.35rem;
+    }
+
+    .custom-cost-field label {
+      font-size: 0.78rem;
+    }
+
+    .btn-add-cost {
+      align-self: flex-start;
+      padding: 0.7rem 1rem;
+      color: var(--primary);
+      background: var(--bg-secondary);
+      border: 2px dashed var(--primary);
+    }
+
+    .btn-add-cost:hover:not(:disabled) {
+      background: rgba(102, 126, 234, 0.1);
+    }
+
+    .btn-add-cost:disabled {
+      cursor: not-allowed;
+      opacity: 0.55;
+    }
+
+    .btn-remove-cost {
+      width: 42px;
+      height: 42px;
+      padding: 0;
+      color: #fff;
+      background: var(--danger);
+      font-size: 1.1rem;
+    }
+
+    .btn-remove-cost[hidden] {
+      display: none;
+    }
+
     /* ボタン */
     .button-group {
       display: grid;
@@ -592,8 +664,12 @@
     }
 
     /* 印刷用 */
-    @media print {
+    @page {
+      size: A4 portrait;
+      margin: 8mm;
+    }
 
+    @media print {
       .card:first-child,
       .button-group,
       .button-group-secondary,
@@ -601,25 +677,126 @@
         display: none;
       }
 
+      html,
       body {
         background: white;
         padding: 0;
+        width: auto;
+        min-height: auto;
+        color: #000;
+        font-size: 9pt;
+        line-height: 1.35;
+      }
+
+      header {
+        margin-bottom: 3mm;
+      }
+
+      h1 {
+        font-size: 17pt;
+        animation: none;
+      }
+
+      .subtitle {
+        display: none;
+      }
+
+      main {
+        max-width: none;
+      }
+
+      .container {
+        display: block;
+        animation: none;
       }
 
       .card {
         box-shadow: none;
         border: 1px solid #ddd;
+        border-radius: 3mm;
+        padding: 4mm;
+        background: #fff;
+      }
+
+      .card-title {
+        margin-bottom: 2.5mm;
+        font-size: 13pt;
       }
 
       .result-total {
         animation: none;
+        margin-bottom: 2.5mm;
+        padding: 2.5mm;
+        border-radius: 2mm;
+        font-size: 11pt;
         print-color-adjust: exact;
         -webkit-print-color-adjust: exact;
       }
 
-      .estimate-comment,
-      .remarks {
+      .result-total .amount {
+        margin-top: 0;
+        font-size: 19pt;
+      }
+
+      .estimate-comment {
+        margin: 0 0 2.5mm;
+        padding: 2mm;
+        border-radius: 1.5mm;
+        font-size: 9pt;
+        print-color-adjust: exact;
+        -webkit-print-color-adjust: exact;
+      }
+
+      .subtotal-list {
+        margin-bottom: 2.5mm;
+      }
+
+      .summary-item {
+        grid-template-columns: 34mm 1fr auto;
+        gap: 2mm;
+        padding: 1.2mm 2mm;
+        font-size: 8.5pt;
+        line-height: 1.25;
         break-inside: avoid;
+      }
+
+      .summary-item:hover {
+        transform: none;
+      }
+
+      .summary-item .note {
+        font-size: 7.5pt;
+      }
+
+      .subtotal-highlight {
+        margin-top: 1mm !important;
+        padding-top: 1.5mm !important;
+        border-width: 1px !important;
+        print-color-adjust: exact;
+        -webkit-print-color-adjust: exact;
+      }
+
+      .remarks {
+        margin-top: 2.5mm;
+        padding: 2.5mm 3mm;
+        font-size: 7.5pt;
+        line-height: 1.3;
+        break-inside: avoid;
+        print-color-adjust: exact;
+        -webkit-print-color-adjust: exact;
+      }
+
+      .remarks h3 {
+        margin-bottom: 1mm;
+        font-size: 9pt;
+      }
+
+      .remarks ul {
+        padding-left: 4mm;
+      }
+
+      .remarks li + li {
+        margin-top: 0.6mm;
       }
     }
 
@@ -638,6 +815,14 @@
 
       .summary-item .value {
         text-align: left;
+      }
+
+      .custom-cost-row {
+        grid-template-columns: 1fr;
+      }
+
+      .btn-remove-cost {
+        width: 100%;
       }
     }
   </style>
@@ -750,15 +935,12 @@
             <input type="number" id="agencyFee" value="110" min="0" max="110" step="0.1">
           </div>
 
-          <div class="form-group">
-            <label for="otherCost1">その他費用1(円)</label>
-            <input type="number" id="otherCost1" placeholder="例: 清掃費 10000" min="0" max="1000000">
-          </div>
-
-          <div class="form-group">
-            <label for="otherCost2">その他費用2(円)</label>
-            <input type="number" id="otherCost2" placeholder="例: 害虫駆除 5000" min="0" max="1000000">
-          </div>
+          <section class="custom-costs" aria-labelledby="custom-costs-title">
+            <h3 class="custom-costs-title" id="custom-costs-title">その他費用</h3>
+            <p class="custom-costs-help">項目名と金額を入力してください。未入力の項目は計算結果に表示されません（最大8件）。</p>
+            <div id="otherCostsContainer"></div>
+            <button type="button" class="btn-add-cost" id="addOtherCostBtn">＋ その他費用を追加</button>
+          </section>
 
           <div class="button-group">
             <button type="submit" class="btn-primary">💰 計算する</button>
@@ -825,7 +1007,7 @@
             <li>前家賃・前管理費は、入居月の翌月1ヶ月分として計算しています。</li>
             <li>保証会社保証料は、月額家賃と月額管理費の合計に入力した割合を掛けて計算しています。</li>
             <li>居住用建物の仲介手数料は、貸主・借主の合計で原則として賃料1.1ヶ月分以内（税込）です。借主から0.55ヶ月分を超えて受け取るには、媒介依頼時の承諾が必要です。</li>
-            <li>敷金、礼金、保険料、鍵交換代、保証料、仲介手数料などの対象可否と認定額は、世帯状況、地域、転居理由、自治体の取扱いなどにより異なります。</li>
+            <li>敷金、礼金、保険料、鍵交換代、保証料、仲介手数料、その他費用などの対象可否と認定額は、世帯状況、地域、転居理由、自治体の取扱いなどにより異なります。</li>
             <li>住宅扶助には地域や世帯人数などに応じた限度額があります。契約前に、見積書と物件資料を担当ケースワーカーまたは福祉事務所へ提示して確認してください。</li>
             <li>このシミュレーターは自治体や福祉事務所の公式な判定ツールではありません。最終的な費用は、賃貸借契約書、不動産会社の見積書および福祉事務所の決定をご確認ください。</li>
           </ul>
@@ -860,11 +1042,11 @@
       keyChangeFee: 15000,
       guaranteeFee: 50,
       agencyFee: 110,
-      otherCost1: 0,
-      otherCost2: 0,
       roundingMethod: 'floor',
       daysMode: 'actual'
     };
+
+    const MAX_OTHER_COSTS = 8;
 
     const FIELD_LABELS = {
       moveInDate: '入居年月日',
@@ -875,15 +1057,15 @@
       insurance: '火災保険',
       keyChangeFee: '鍵交換代',
       guaranteeFee: '保証会社保証料',
-      agencyFee: '仲介手数料',
-      otherCost1: 'その他費用1',
-      otherCost2: 'その他費用2'
+      agencyFee: '仲介手数料'
     };
 
     // 計算機クラス
     class CostCalculator {
       constructor() {
         this.form = document.getElementById('calculatorForm');
+        this.otherCostsContainer = document.getElementById('otherCostsContainer');
+        this.nextOtherCostRowId = 1;
         this.storageKey = 'rentCalculatorData';
         this.errorIds = {
           moveInDate: 'error-moveInDate',
@@ -892,10 +1074,10 @@
         this.fields = [
           'moveInDate', 'rent', 'deposit', 'keyMoney',
           'managementFee', 'insurance', 'keyChangeFee',
-          'guaranteeFee', 'agencyFee', 'otherCost1', 'otherCost2',
-          'roundingMethod', 'daysMode'
+          'guaranteeFee', 'agencyFee', 'roundingMethod', 'daysMode'
         ];
 
+        this.renderOtherCosts([{ name: '', amount: '' }, { name: '', amount: '' }]);
         this.init();
       }
 
@@ -912,6 +1094,19 @@
         });
         document.getElementById('shareBtn').addEventListener('click', () => this.share());
         document.getElementById('themeToggle').addEventListener('click', () => this.toggleTheme());
+        document.getElementById('addOtherCostBtn').addEventListener('click', () => this.addOtherCost());
+
+        this.otherCostsContainer.addEventListener('input', (e) => {
+          if (!e.target.matches('.custom-cost-input')) return;
+          this.saveToStorage();
+          this.calculate();
+        });
+
+        this.otherCostsContainer.addEventListener('click', (e) => {
+          const removeButton = e.target.closest('.btn-remove-cost');
+          if (!removeButton) return;
+          this.removeOtherCost(removeButton.closest('.custom-cost-row'));
+        });
 
         // リアルタイム計算
         this.fields.forEach(id => {
@@ -925,10 +1120,127 @@
         });
 
         // 初期化
-        const loaded = this.loadFromURL() || this.loadFromStorage();
-        if (!loaded) this.applyDefaults();
+        this.loadFromURL() || this.loadFromStorage();
+        // URLや保存データに含まれない空欄だけ既定値で補完
+        this.applyDefaults();
         this.initTheme();
         this.calculate();
+      }
+
+      createOtherCostRow(cost = {}) {
+        const rowId = this.nextOtherCostRowId++;
+        const row = document.createElement('div');
+        row.className = 'custom-cost-row';
+
+        const nameField = document.createElement('div');
+        nameField.className = 'custom-cost-field';
+        const nameLabel = document.createElement('label');
+        nameLabel.className = 'custom-cost-name-label';
+        nameLabel.htmlFor = `otherCostName-${rowId}`;
+        const nameInput = document.createElement('input');
+        nameInput.type = 'text';
+        nameInput.id = `otherCostName-${rowId}`;
+        nameInput.className = 'custom-cost-input custom-cost-name';
+        nameInput.maxLength = 40;
+        nameInput.placeholder = '例：24時間サポート';
+        nameInput.value = typeof cost.name === 'string' ? cost.name.slice(0, 40) : '';
+        nameField.appendChild(nameLabel);
+        nameField.appendChild(nameInput);
+
+        const amountField = document.createElement('div');
+        amountField.className = 'custom-cost-field';
+        const amountLabel = document.createElement('label');
+        amountLabel.className = 'custom-cost-amount-label';
+        amountLabel.htmlFor = `otherCostAmount-${rowId}`;
+        const amountInput = document.createElement('input');
+        amountInput.type = 'number';
+        amountInput.id = `otherCostAmount-${rowId}`;
+        amountInput.className = 'custom-cost-input custom-cost-amount';
+        amountInput.min = '0';
+        amountInput.max = '1000000';
+        amountInput.step = '1';
+        amountInput.inputMode = 'numeric';
+        amountInput.placeholder = '例：16500';
+        const amountValue = cost.amount ?? '';
+        amountInput.value = String(amountValue) === '0' && !nameInput.value ? '' : String(amountValue);
+        amountField.appendChild(amountLabel);
+        amountField.appendChild(amountInput);
+
+        const removeButton = document.createElement('button');
+        removeButton.type = 'button';
+        removeButton.className = 'btn-remove-cost';
+        removeButton.textContent = '×';
+
+        row.appendChild(nameField);
+        row.appendChild(amountField);
+        row.appendChild(removeButton);
+        return row;
+      }
+
+      renderOtherCosts(costs = []) {
+        const normalized = Array.isArray(costs)
+          ? costs.filter(cost => cost && typeof cost === 'object').slice(0, MAX_OTHER_COSTS)
+          : [];
+        while (normalized.length < 2) normalized.push({ name: '', amount: '' });
+
+        this.otherCostsContainer.innerHTML = '';
+        normalized.forEach(cost => this.otherCostsContainer.appendChild(this.createOtherCostRow(cost)));
+        this.refreshOtherCostRows();
+      }
+
+      refreshOtherCostRows() {
+        const rows = Array.from(this.otherCostsContainer.querySelectorAll('.custom-cost-row'));
+        rows.forEach((row, index) => {
+          const number = index + 1;
+          row.querySelector('.custom-cost-name-label').textContent = `その他費用${number}（項目名）`;
+          row.querySelector('.custom-cost-amount-label').textContent = `その他費用${number}（金額・円）`;
+          const removeButton = row.querySelector('.btn-remove-cost');
+          removeButton.hidden = index < 2;
+          removeButton.setAttribute('aria-label', `その他費用${number}を削除`);
+        });
+
+        const addButton = document.getElementById('addOtherCostBtn');
+        const atLimit = rows.length >= MAX_OTHER_COSTS;
+        addButton.disabled = atLimit;
+        addButton.textContent = atLimit ? `その他費用は最大${MAX_OTHER_COSTS}件です` : '＋ その他費用を追加';
+      }
+
+      addOtherCost() {
+        const rows = this.otherCostsContainer.querySelectorAll('.custom-cost-row');
+        if (rows.length >= MAX_OTHER_COSTS) {
+          this.showToast(`その他費用は最大${MAX_OTHER_COSTS}件まで追加できます`);
+          return;
+        }
+
+        const row = this.createOtherCostRow();
+        this.otherCostsContainer.appendChild(row);
+        this.refreshOtherCostRows();
+        this.saveToStorage();
+        row.querySelector('.custom-cost-name').focus();
+      }
+
+      removeOtherCost(row) {
+        if (!row) return;
+        const rows = Array.from(this.otherCostsContainer.querySelectorAll('.custom-cost-row'));
+        if (rows.indexOf(row) < 2) return;
+
+        row.remove();
+        this.refreshOtherCostRows();
+        this.saveToStorage();
+        this.calculate();
+      }
+
+      getOtherCosts() {
+        return Array.from(this.otherCostsContainer.querySelectorAll('.custom-cost-row')).map((row, index) => {
+          const name = row.querySelector('.custom-cost-name').value.trim();
+          const amountRaw = row.querySelector('.custom-cost-amount').value;
+          return {
+            index: index + 1,
+            name,
+            amountRaw,
+            amount: this.toNumber(amountRaw)
+          };
+        });
       }
 
       getValue(id) {
@@ -1023,6 +1335,7 @@
         const errorSummary = document.getElementById('formErrorSummary');
 
         Object.keys(FIELD_LABELS).forEach(id => this.clearError(id));
+        this.otherCostsContainer.querySelectorAll('.custom-cost-input').forEach(input => this.clearError(input.id));
         errorSummary.textContent = '';
         errorSummary.classList.remove('show');
 
@@ -1058,6 +1371,28 @@
             addError(id, `${label}は${min.toLocaleString()}以上で入力してください。`);
           } else if (max !== null && value > max) {
             addError(id, `${label}は${max.toLocaleString()}以下で入力してください。`);
+          }
+        });
+
+        this.getOtherCosts().forEach(cost => {
+          const row = this.otherCostsContainer.querySelectorAll('.custom-cost-row')[cost.index - 1];
+          const nameInput = row.querySelector('.custom-cost-name');
+          const amountInput = row.querySelector('.custom-cost-amount');
+          const hasName = cost.name.length > 0;
+          const hasAmount = cost.amountRaw !== '';
+
+          if (!hasName && !hasAmount) return;
+          if (!hasName) {
+            addError(nameInput.id, `その他費用${cost.index}の項目名を入力してください。`);
+          }
+          if (!hasAmount) {
+            addError(amountInput.id, `その他費用${cost.index}の金額を入力してください。`);
+          } else if (!Number.isFinite(Number(cost.amountRaw))) {
+            addError(amountInput.id, `その他費用${cost.index}の金額を数値で入力してください。`);
+          } else if (cost.amount <= 0) {
+            addError(amountInput.id, `その他費用${cost.index}の金額は1円以上で入力してください。`);
+          } else if (cost.amount > 1000000) {
+            addError(amountInput.id, `その他費用${cost.index}の金額は1,000,000円以下で入力してください。`);
           }
         });
 
@@ -1115,8 +1450,8 @@
         const keyChangeFee = this.getValue('keyChangeFee');
         const guaranteeFee = this.getValue('guaranteeFee');
         const agencyFee = this.getValue('agencyFee');
-        const otherCost1 = this.getValue('otherCost1');
-        const otherCost2 = this.getValue('otherCost2');
+        const otherCosts = this.getOtherCosts();
+        const otherCostsTotal = otherCosts.reduce((total, cost) => total + cost.amount, 0);
         const roundingMethod = document.getElementById('roundingMethod')?.value || 'round';
         const daysMode = document.getElementById('daysMode')?.value || 'actual';
 
@@ -1162,7 +1497,7 @@
 
         const totalCost = depositCost + keyMoneyCost + insurance + keyChangeFee +
           guaranteeFeeCost + agencyFeeCost + advanceRent + advanceManagementFee +
-          otherCost1 + otherCost2 + dailyRent + dailyManagementFee;
+          otherCostsTotal + dailyRent + dailyManagementFee;
 
         const prepayTotal = advanceRent + advanceManagementFee + dailyRent + dailyManagementFee;
         const nonRentTotal = totalCost - prepayTotal;
@@ -1191,8 +1526,11 @@
           { label: '鍵交換代', value: keyChangeFee, note: '' },
           { label: '保証会社保証料', value: guaranteeFeeCost, note: guaranteeFee > 0 ? `賃料総額の${guaranteeFee}%` : '' },
           { label: '仲介手数料', value: agencyFeeCost, note: agencyFee > 0 ? `賃料の${agencyFee}%` : '' },
-          { label: 'その他費用1', value: otherCost1, note: '' },
-          { label: 'その他費用2', value: otherCost2, note: '' }
+          ...otherCosts.map(cost => ({
+            label: cost.name || `その他費用${cost.index}`,
+            value: cost.amount,
+            note: ''
+          }))
         ].filter(item => item.value > 0);
 
         // 内訳リスト更新
@@ -1253,6 +1591,10 @@
         this.fields.forEach(id => {
           data[id] = document.getElementById(id)?.value || '';
         });
+        data.otherCosts = this.getOtherCosts().map(cost => ({
+          name: cost.name,
+          amount: cost.amountRaw
+        }));
         try {
           localStorage.setItem(this.storageKey, JSON.stringify(data));
         } catch (e) {
@@ -1271,6 +1613,16 @@
                 if (el) el.value = data[id];
               }
             });
+
+            if (Array.isArray(data.otherCosts)) {
+              this.renderOtherCosts(data.otherCosts);
+            } else {
+              // 旧形式（otherCost1・otherCost2）の保存データを引き継ぐ
+              this.renderOtherCosts([
+                { name: this.toNumber(data.otherCost1) > 0 ? 'その他費用1' : '', amount: this.toNumber(data.otherCost1) > 0 ? data.otherCost1 : '' },
+                { name: this.toNumber(data.otherCost2) > 0 ? 'その他費用2' : '', amount: this.toNumber(data.otherCost2) > 0 ? data.otherCost2 : '' }
+              ]);
+            }
             return true;
           }
         } catch (e) {
@@ -1288,7 +1640,7 @@
             const el = document.getElementById(id);
             if (!el) return;
             if (el.type === 'number') {
-              const num = this.toNumber(value);
+              const num = Number(value);
               el.value = Number.isFinite(num) ? String(num) : '';
             } else if (el.type === 'date') {
               el.value = this.isValidDateString(value) ? value : '';
@@ -1298,6 +1650,30 @@
             hasParams = true;
           }
         });
+
+        const serializedOtherCosts = params.get('otherCosts');
+        if (serializedOtherCosts !== null) {
+          try {
+            const otherCosts = JSON.parse(serializedOtherCosts);
+            if (Array.isArray(otherCosts)) {
+              this.renderOtherCosts(otherCosts);
+              hasParams = true;
+            }
+          } catch (e) {
+            console.warn('共有URLのその他費用を読み込めませんでした:', e);
+          }
+        } else {
+          // 旧形式（otherCost1・otherCost2）の共有URLを引き継ぐ
+          const legacyOtherCost1 = params.get('otherCost1');
+          const legacyOtherCost2 = params.get('otherCost2');
+          if (legacyOtherCost1 !== null || legacyOtherCost2 !== null) {
+            this.renderOtherCosts([
+              { name: this.toNumber(legacyOtherCost1) > 0 ? 'その他費用1' : '', amount: this.toNumber(legacyOtherCost1) > 0 ? legacyOtherCost1 : '' },
+              { name: this.toNumber(legacyOtherCost2) > 0 ? 'その他費用2' : '', amount: this.toNumber(legacyOtherCost2) > 0 ? legacyOtherCost2 : '' }
+            ]);
+            hasParams = true;
+          }
+        }
         return hasParams;
       }
 
@@ -1335,6 +1711,7 @@
           const el = document.getElementById(id);
           if (el) el.value = '';
         });
+        this.renderOtherCosts([{ name: '', amount: '' }, { name: '', amount: '' }]);
 
         // デフォルト値設定
         this.applyDefaults();
@@ -1357,6 +1734,10 @@
           const value = document.getElementById(id)?.value;
           if (value) params.set(id, value);
         });
+        const otherCosts = this.getOtherCosts()
+          .filter(cost => cost.name || cost.amountRaw)
+          .map(cost => ({ name: cost.name, amount: cost.amountRaw }));
+        if (otherCosts.length > 0) params.set('otherCosts', JSON.stringify(otherCosts));
 
         const url = window.location.origin + window.location.pathname + '?' + params.toString();
 
