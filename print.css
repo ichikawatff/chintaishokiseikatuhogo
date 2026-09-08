@@ -1,0 +1,24 @@
+@page { size: A4 portrait; margin: 8mm; }
+* { box-sizing: border-box; }
+html, body { margin: 0; padding: 0; background: white; color: #111; font-family: 'Yu Gothic', Meiryo, sans-serif; font-size: 9pt; line-height: 1.4; }
+#paper { width: 194mm; padding: 2mm; }
+h1 { font-size: 17pt; margin: 0 0 2mm; text-align: center; }
+h2 { font-size: 12pt; margin: 0 0 2mm; }
+h3 { font-size: 10pt; margin: 0 0 1mm; }
+p { margin: 1mm 0 2mm; }
+.created-date { text-align: right; font-size: 8pt; }
+.property-summary { font-weight: bold; white-space: pre-line; overflow-wrap: anywhere; }
+.result-total { border: 1px solid #555; padding: 2mm; text-align: center; font-size: 11pt; }
+.amount { display: block; font-size: 20pt; font-weight: bold; }
+.estimate-comment { text-align: center; font-weight: bold; }
+.summary-item { display: grid; grid-template-columns: minmax(0, 1.5fr) minmax(0, 1fr) 30mm; gap: 2mm; border-bottom: 1px solid #ccc; padding: 1.1mm 1mm; break-inside: avoid; }
+.label, .note { overflow-wrap: anywhere; min-width: 0; }
+.note { font-size: 8pt; color: #333; }
+.value { text-align: right; font-weight: bold; white-space: nowrap; }
+.subtotal-highlight { border-top: 1px solid #555; background: #f0f0f0; font-weight: bold; }
+.subtotal-list { margin-bottom: 2mm; }
+.remarks { margin-top: 3mm; border: 1px solid #bbb; padding: 2mm; font-size: 8pt; }
+.remarks ul { margin: 0; padding-left: 4mm; }
+.remarks li + li { margin-top: .6mm; }
+@media screen { body { background: #e5e7eb; } #paper { margin: 4mm auto; background: white; box-shadow: 0 1px 5px #999; } }
+@media print { #paper { margin: 0; } }

@@ -825,6 +825,36 @@
         width: 100%;
       }
     }
+    [hidden] { display: none !important; }
+    .notice { margin: 1rem auto; padding: 1rem; background: var(--bg-secondary); border: 1px solid var(--border-color); border-radius: 8px; max-width: 1200px; }
+    .notice button { display: inline-flex; padding: .5rem 1rem; margin: .3rem; }
+    .mobile-total { display: none; }
+    .property-summary { white-space: pre-line; overflow-wrap: anywhere; margin-bottom: 1rem; }
+    .summary-item .label { min-width: 0; overflow-wrap: anywhere; }
+    .summary-item { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) auto; }
+    .summary-item .note { white-space: normal; }
+    #resultStatus { padding-bottom: 1rem; color: var(--text-secondary); }
+    #printDialog { margin: auto; width: min(96vw, 900px); max-height: 95vh; padding: 1rem; border: 0; border-radius: 8px; background: var(--bg-secondary); color: var(--text-primary); }
+    #printDialog::backdrop { background: #0008; }
+    .preview-actions { display: flex; gap: .5rem; flex-wrap: wrap; margin: .5rem 0; }
+    #printPreview { width: 100%; height: 65vh; border: 1px solid #aaa; background: white; }
+    @media screen and (max-width: 900px) {
+      body { padding-bottom: 100px; }
+      header { padding-top: 3rem; }
+      .mobile-total { position: fixed; display: flex; align-items: center; justify-content: space-between; gap: 1rem; bottom: 0; left: 0; right: 0; padding: .75rem 1rem max(.75rem, env(safe-area-inset-bottom)); background: var(--bg-secondary); border-top: 1px solid var(--border-color); z-index: 110; }
+      .mobile-total button { padding: .65rem; }
+    }
+    @media screen and (max-width: 600px) {
+      .summary-item { grid-template-columns: minmax(0, 1fr) auto; }
+      .summary-item .note { grid-column: 1; }
+      .summary-item .value { grid-column: 2; grid-row: 1 / span 2; text-align: right; }
+    }
+    @media print {
+      .notice, .mobile-total, #printDialog, .success-toast { display: none !important; }
+      h1 { color: black; -webkit-text-fill-color: black; background: none; }
+      .property-summary { margin-bottom: 2mm; font-size: 9pt; }
+      .summary-item { grid-template-columns: 60mm 1fr auto; }
+    }
   </style>
 </head>
 
@@ -838,12 +868,16 @@
   </header>
 
   <main>
+    <div class="notice" id="restoreNotice" hidden><span id="restoreMessage"></span><button type="button" id="newCalculationBtn" class="btn-secondary">新しく計算する</button></div>
+    <div class="notice" id="updateNotice" hidden>新しいバージョンがあります。入力内容を保存して更新できます。<button type="button" id="updateBtn" class="btn-primary">保存して更新</button></div>
     <div class="container">
       <!-- 入力フォーム -->
       <section class="card" aria-labelledby="form-title">
         <h2 class="card-title" id="form-title">📝 条件を入力</h2>
 
         <form id="calculatorForm" novalidate>
+          <div class="form-group"><label for="propertyName">物件名（任意）</label><input type="text" id="propertyName" maxlength="80" placeholder="例：市川ハイツ"></div>
+          <div class="form-group"><label for="roomNumber">号室（任意）</label><input type="text" id="roomNumber" maxlength="20" placeholder="例：101号室"></div>
           <div class="error-summary" id="formErrorSummary" role="alert" aria-live="assertive"></div>
           <div class="form-group">
             <label for="moveInDate">
@@ -912,6 +946,7 @@
           <div class="form-group">
             <label for="insurance">火災保険(円)</label>
             <input type="number" id="insurance" value="20000" min="0" max="100000">
+            <label for="insurancePeriod">保険期間</label><select id="insurancePeriod"><option value="2年">2年</option><option value="1年">1年</option><option value="月額">月額</option><option value="契約による">契約による</option></select>
           </div>
 
           <div class="form-group">
@@ -920,6 +955,8 @@
           </div>
 
           <div class="form-group">
+            <label for="guaranteeMode">保証会社保証料の入力方法</label><select id="guaranteeMode"><option value="percent">割合で計算</option><option value="amount">金額を直接入力</option></select>
+            <div id="guaranteeAmountGroup" hidden><label for="guaranteeAmount">保証会社保証料（円）</label><input type="number" id="guaranteeAmount" min="0" max="1000000" step="1" value="0"></div>
             <label for="guaranteeFee">
               保証会社保証料(%)
               <span class="tooltip-icon" data-tooltip="月額賃料+管理費の合計に対する割合">?</span>
@@ -928,6 +965,8 @@
           </div>
 
           <div class="form-group">
+            <label for="agencyMode">仲介手数料の入力方法</label><select id="agencyMode"><option value="percent">割合で計算</option><option value="amount">金額を直接入力</option></select>
+            <div id="agencyAmountGroup" hidden><label for="agencyAmount">仲介手数料（税込・円）</label><input type="number" id="agencyAmount" min="0" max="1000000" step="1" value="0"></div>
             <label for="agencyFee">
               仲介手数料(%)
               <span class="tooltip-icon" data-tooltip="賃料に対する割合(上限1.1ヶ月=110%)">?</span>
@@ -948,7 +987,7 @@
           </div>
 
           <div class="button-group-secondary">
-            <button type="button" class="btn-info" id="printBtn">🖨️ 印刷</button>
+            <button type="button" class="btn-info" id="printBtn">🖨️ 印刷プレビュー</button>
             <button type="button" class="btn-warning" id="shareBtn">🔗 URL共有</button>
           </div>
         </form>
@@ -958,6 +997,8 @@
       <!-- 結果表示 -->
       <section class="card" aria-labelledby="result-title">
         <h2 class="card-title" id="result-title">📊 計算結果</h2>
+        <p class="property-summary" id="propertySummary"></p>
+        <p id="resultStatus" role="status"></p>
 
         <div class="result-total" aria-live="polite">
           初期費用合計
@@ -1005,7 +1046,7 @@
             <li>この結果は入力内容に基づく概算であり、賃貸借契約の請求額や生活保護の支給額を確定するものではありません。</li>
             <li id="dailyCalculationRemark">日割り家賃・管理費は、入居日を含めて月末までの日数で計算します。</li>
             <li>前家賃・前管理費は、入居月の翌月1ヶ月分として計算しています。</li>
-            <li>保証会社保証料は、月額家賃と月額管理費の合計に入力した割合を掛けて計算しています。</li>
+            <li id="guaranteeRemark">保証会社保証料は、月額家賃と月額管理費の合計に入力した割合を掛けて計算しています。</li>
             <li>居住用建物の仲介手数料は、貸主・借主の合計で原則として賃料1.1ヶ月分以内（税込）です。借主から0.55ヶ月分を超えて受け取るには、媒介依頼時の承諾が必要です。</li>
             <li>敷金、礼金、保険料、鍵交換代、保証料、仲介手数料、その他費用などの対象可否と認定額は、世帯状況、地域、転居理由、自治体の取扱いなどにより異なります。</li>
             <li>住宅扶助には地域や世帯人数などに応じた限度額があります。契約前に、見積書と物件資料を担当ケースワーカーまたは福祉事務所へ提示して確認してください。</li>
@@ -1015,6 +1056,8 @@
       </section>
     </div>
   </main>
+  <div class="mobile-total"><div>概算合計<br><strong id="mobileAmount" aria-live="polite">計算中</strong></div><button type="button" id="showResultBtn" class="btn-primary">結果を見る</button></div>
+  <dialog id="printDialog" aria-labelledby="printDialogTitle"><h2 id="printDialogTitle">A4縦・印刷プレビュー</h2><p id="printFitStatus" role="status"></p><p>用紙：A4縦、倍率：100%、ヘッダーとフッター：オフで印刷してください。</p><div class="preview-actions"><button type="button" id="confirmPrintBtn" class="btn-primary">印刷・PDF保存</button><button type="button" id="closePrintBtn" class="btn-secondary">閉じる</button></div><iframe id="printPreview" title="印刷する概算書"></iframe></dialog>
 
   <!-- 成功トースト -->
   <div class="success-toast" id="successToast"></div>
@@ -1034,6 +1077,8 @@
   <script>
     // 定数定義
     const DEFAULTS = {
+      propertyName: '', roomNumber: '', insurancePeriod: '2年',
+      guaranteeMode: 'percent', agencyMode: 'percent', guaranteeAmount: 0, agencyAmount: 0,
       rent: 53700,
       managementFee: 0,
       deposit: 1,
@@ -1049,6 +1094,7 @@
     const MAX_OTHER_COSTS = 8;
 
     const FIELD_LABELS = {
+      guaranteeAmount: '保証会社保証料（円）', agencyAmount: '仲介手数料（円）',
       moveInDate: '入居年月日',
       rent: '月額家賃',
       managementFee: '月額管理費',
@@ -1072,6 +1118,7 @@
           rent: 'error-rent'
         };
         this.fields = [
+          'propertyName', 'roomNumber', 'insurancePeriod', 'guaranteeMode', 'agencyMode', 'guaranteeAmount', 'agencyAmount',
           'moveInDate', 'rent', 'deposit', 'keyMoney',
           'managementFee', 'insurance', 'keyChangeFee',
           'guaranteeFee', 'agencyFee', 'roundingMethod', 'daysMode'
@@ -1090,8 +1137,13 @@
 
         document.getElementById('resetBtn').addEventListener('click', () => this.reset());
         document.getElementById('printBtn').addEventListener('click', () => {
-          if (this.calculate(true)) window.print();
+          if (this.calculate(true)) this.openPrintPreview();
         });
+        document.getElementById('newCalculationBtn').addEventListener('click', () => this.reset());
+        document.addEventListener('save-before-update', () => this.saveToStorage());
+        document.getElementById('showResultBtn').addEventListener('click', () => document.getElementById('result-title').scrollIntoView({ behavior: 'smooth' }));
+        document.getElementById('closePrintBtn').addEventListener('click', () => document.getElementById('printDialog').close());
+        document.getElementById('confirmPrintBtn').addEventListener('click', () => document.getElementById('printPreview').contentWindow.print());
         document.getElementById('shareBtn').addEventListener('click', () => this.share());
         document.getElementById('themeToggle').addEventListener('click', () => this.toggleTheme());
         document.getElementById('addOtherCostBtn').addEventListener('click', () => this.addOtherCost());
@@ -1120,7 +1172,13 @@
         });
 
         // 初期化
-        this.loadFromURL() || this.loadFromStorage();
+        this.applyDefaults();
+        const fromURL = this.loadFromURL();
+        const fromStorage = !fromURL && this.loadFromStorage();
+        if (fromURL || fromStorage) {
+          document.getElementById('restoreNotice').hidden = false;
+          document.getElementById('restoreMessage').textContent = fromURL ? '共有URLの入力内容を読み込みました。' : '前回の入力を復元しました。入居日・金額をご確認ください。';
+        }
         // URLや保存データに含まれない空欄だけ既定値で補完
         this.applyDefaults();
         this.initTheme();
@@ -1247,6 +1305,51 @@
         return this.toNumber(document.getElementById(id)?.value);
       }
 
+      updateFeeModes() {
+        ['guarantee', 'agency'].forEach(prefix => {
+          const direct = document.getElementById(`${prefix}Mode`).value === 'amount';
+          const percent = document.getElementById(`${prefix}Fee`);
+          percent.disabled = direct;
+          percent.hidden = direct;
+          document.querySelector(`label[for="${prefix}Fee"]`).hidden = direct;
+          document.getElementById(`${prefix}AmountGroup`).hidden = !direct;
+          document.getElementById(`${prefix}Amount`).disabled = !direct;
+          document.getElementById(`${prefix}Amount`).required = direct;
+        });
+      }
+
+      async openPrintPreview() {
+        const dialog = document.getElementById('printDialog');
+        const frame = document.getElementById('printPreview');
+        const status = document.getElementById('printFitStatus');
+        const printButton = document.getElementById('confirmPrintBtn');
+        printButton.disabled = true;
+        status.textContent = '印刷内容を準備しています…';
+        dialog.showModal();
+        const result = document.querySelector('[aria-labelledby="result-title"]').cloneNode(true);
+        result.querySelector('#resultStatus').remove();
+        result.querySelectorAll('[style]').forEach(el => el.removeAttribute('style'));
+        const created = document.createElement('p');
+        created.className = 'created-date';
+        created.textContent = `作成日：${new Date().toLocaleDateString('ja-JP')}`;
+        result.prepend(created);
+        frame.onload = async () => {
+          const doc = frame.contentDocument;
+          if (!doc.styleSheets.length) {
+            status.textContent = '印刷レイアウトを読み込めませんでした。閉じてから、もう一度お試しください。';
+            return;
+          }
+          await doc.fonts.ready;
+          const paper = doc.getElementById('paper');
+          const height = paper.getBoundingClientRect().height;
+          const scale = Math.min(1, (279 * 96 / 25.4) / height);
+          paper.style.zoom = String(scale);
+          status.textContent = `A4縦1枚・文字サイズ調整 ${Math.round(scale * 100)}%`;
+          printButton.disabled = false;
+        };
+        frame.srcdoc = `<!doctype html><html lang="ja"><head><meta charset="utf-8"><title>賃貸初期費用 概算書</title><link rel="stylesheet" href="${new URL('print.css', location.href).href}"></head><body><article id="paper"><h1>賃貸初期費用 概算書</h1>${result.outerHTML}</article></body></html>`;
+      }
+
       getDateValue(id) {
         return document.getElementById(id)?.value || '';
       }
@@ -1355,15 +1458,16 @@
         Object.keys(FIELD_LABELS).forEach(id => {
           if (id === 'moveInDate') return;
           const input = document.getElementById(id);
+          if (input?.disabled) return;
           const raw = input?.value ?? '';
-          if (!input || (raw === '' && !input.required)) return;
+          if (!input || (raw === '' && !input.required && !input.validity.badInput)) return;
 
           const value = Number(raw);
           const min = input.min === '' ? null : Number(input.min);
           const max = input.max === '' ? null : Number(input.max);
           const label = FIELD_LABELS[id];
 
-          if (raw === '' || !Number.isFinite(value)) {
+          if (input.validity.badInput || raw === '' || !Number.isFinite(value)) {
             addError(id, `${label}を数値で入力してください。`);
           } else if (id === 'rent' && value <= 0) {
             addError(id, '月額家賃は1円以上で入力してください。');
@@ -1371,6 +1475,8 @@
             addError(id, `${label}は${min.toLocaleString()}以上で入力してください。`);
           } else if (max !== null && value > max) {
             addError(id, `${label}は${max.toLocaleString()}以下で入力してください。`);
+          } else if (input.validity.stepMismatch) {
+            addError(id, `${label}は${input.step || '1'}単位で入力してください。`);
           }
         });
 
@@ -1393,6 +1499,8 @@
             addError(amountInput.id, `その他費用${cost.index}の金額は1円以上で入力してください。`);
           } else if (cost.amount > 1000000) {
             addError(amountInput.id, `その他費用${cost.index}の金額は1,000,000円以下で入力してください。`);
+          } else if (!Number.isInteger(cost.amount)) {
+            addError(amountInput.id, `その他費用${cost.index}の金額は整数円で入力してください。`);
           }
         });
 
@@ -1441,6 +1549,7 @@
       }
 
       calculate(focusOnError = false) {
+        this.updateFeeModes();
         const moveInDate = this.getDateValue('moveInDate');
         const rent = this.getValue('rent');
         const managementFee = this.getValue('managementFee');
@@ -1460,7 +1569,9 @@
 
         // バリデーション
         if (!this.validate(focusOnError)) {
-          document.getElementById('totalAmount').textContent = `0 円`;
+          document.getElementById('totalAmount').textContent = '入力中';
+          document.getElementById('mobileAmount').textContent = '入力中';
+          document.getElementById('resultStatus').textContent = '計算未完了です。入力欄の案内に沿って項目名・金額などを入力してください。';
           document.getElementById('advanceRentValue').textContent = `0 円`;
           document.getElementById('advanceRentNote').textContent = '';
           document.getElementById('advanceManagementValue').textContent = `0 円`;
@@ -1472,14 +1583,17 @@
           document.getElementById('prepayTotal').textContent = `0 円`;
           const summaryList = document.getElementById('summaryList');
           summaryList.innerHTML = '';
+          document.querySelectorAll('.subtotal-list .value').forEach(el => el.textContent = '—');
           return false;
         }
 
         // 計算
         const depositCost = Math.round(rent * deposit);
         const keyMoneyCost = Math.round(rent * keyMoney);
-        const guaranteeFeeCost = Math.round((rent + managementFee) * (guaranteeFee / 100));
-        const agencyFeeCost = Math.round(rent * (agencyFee / 100));
+        const guaranteeDirect = document.getElementById('guaranteeMode').value === 'amount';
+        const agencyDirect = document.getElementById('agencyMode').value === 'amount';
+        const guaranteeFeeCost = guaranteeDirect ? this.getValue('guaranteeAmount') : Math.round((rent + managementFee) * (guaranteeFee / 100));
+        const agencyFeeCost = agencyDirect ? this.getValue('agencyAmount') : Math.round(rent * (agencyFee / 100));
         const advanceRent = rent;
         const advanceManagementFee = managementFee;
 
@@ -1504,6 +1618,10 @@
 
         // 表示更新
         document.getElementById('totalAmount').textContent = `${totalCost.toLocaleString()} 円`;
+        document.getElementById('mobileAmount').textContent = `${totalCost.toLocaleString()} 円`;
+        document.getElementById('resultStatus').textContent = '';
+        document.getElementById('propertySummary').textContent = [document.getElementById('propertyName').value.trim(), document.getElementById('roomNumber').value.trim()].filter(Boolean).join('　');
+        document.getElementById('guaranteeRemark').textContent = guaranteeDirect ? '保証会社保証料は見積書などから直接入力した金額です。' : '保証会社保証料は、月額家賃と月額管理費の合計に入力した割合を掛けて計算しています。';
         // 前払い家賃の内訳を個別表示(項目、note、金額を同じ行に)
         document.getElementById('advanceRentNote').textContent = moveInDate ? `${nextMonth}月分` : '';
         document.getElementById('advanceRentValue').textContent = `${advanceRent.toLocaleString()} 円`;
@@ -1522,10 +1640,10 @@
         const items = [
           { label: '敷金', value: depositCost, note: deposit > 0 ? `賃料の${deposit}ヶ月分` : '' },
           { label: '礼金', value: keyMoneyCost, note: keyMoney > 0 ? `賃料の${keyMoney}ヶ月分` : '' },
-          { label: '火災保険', value: insurance, note: insurance > 0 ? '2年間の保険料' : '' },
+          { label: '火災保険', value: insurance, note: document.getElementById('insurancePeriod').value },
           { label: '鍵交換代', value: keyChangeFee, note: '' },
-          { label: '保証会社保証料', value: guaranteeFeeCost, note: guaranteeFee > 0 ? `賃料総額の${guaranteeFee}%` : '' },
-          { label: '仲介手数料', value: agencyFeeCost, note: agencyFee > 0 ? `賃料の${agencyFee}%` : '' },
+          { label: '保証会社保証料', value: guaranteeFeeCost, note: guaranteeDirect ? '金額を直接入力' : `賃料総額の${guaranteeFee}%` },
+          { label: '仲介手数料', value: agencyFeeCost, note: agencyDirect ? '金額を直接入力（税込）' : `賃料の${agencyFee}%` },
           ...otherCosts.map(cost => ({
             label: cost.name || `その他費用${cost.index}`,
             value: cost.amount,
@@ -1715,6 +1833,8 @@
 
         // デフォルト値設定
         this.applyDefaults();
+        document.getElementById('restoreNotice').hidden = true;
+        history.replaceState(null, '', window.location.pathname);
 
         try {
           localStorage.removeItem(this.storageKey);
@@ -1729,6 +1849,7 @@
       }
 
       async share() {
+        if (!this.calculate(true)) return;
         const params = new URLSearchParams();
         this.fields.forEach(id => {
           const value = document.getElementById(id)?.value;
@@ -1737,7 +1858,7 @@
         const otherCosts = this.getOtherCosts()
           .filter(cost => cost.name || cost.amountRaw)
           .map(cost => ({ name: cost.name, amount: cost.amountRaw }));
-        if (otherCosts.length > 0) params.set('otherCosts', JSON.stringify(otherCosts));
+        params.set('otherCosts', JSON.stringify(otherCosts));
 
         const url = window.location.origin + window.location.pathname + '?' + params.toString();
 
@@ -1813,7 +1934,24 @@
 
     // Service Worker登録
     if ('serviceWorker' in navigator) {
-      navigator.serviceWorker.register('sw.js').catch(() => { });
+      navigator.serviceWorker.register('sw.js', { updateViaCache: 'none' }).then(registration => {
+        const offerUpdate = () => {
+          if (registration.waiting && navigator.serviceWorker.controller) document.getElementById('updateNotice').hidden = false;
+        };
+        offerUpdate();
+        registration.addEventListener('updatefound', () => {
+          registration.installing?.addEventListener('statechange', offerUpdate);
+        });
+        document.getElementById('updateBtn').addEventListener('click', () => {
+          if (!registration.waiting) return;
+          document.dispatchEvent(new Event('save-before-update'));
+          history.replaceState(null, '', location.pathname);
+          navigator.serviceWorker.addEventListener('controllerchange', () => location.reload(), { once: true });
+          registration.waiting?.postMessage({ type: 'SKIP_WAITING' });
+        });
+        window.addEventListener('online', () => registration.update().catch(() => {}));
+        registration.update().catch(() => {});
+      }).catch(() => {});
     }
   </script>
 </body>
